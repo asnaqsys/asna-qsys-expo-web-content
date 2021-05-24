@@ -141,7 +141,7 @@ class PositionCursor {
     }
 
     static findInput(sflEl, sflInputFieldName, includeHidden) {
-        let selector = 'input';
+        let selector = 'input, select';
         if (!includeHidden)
             selector += ':not([type="hidden"])';
 
