@@ -98,21 +98,21 @@ class Kbd {
     static processRollKey(aidKeyHelper, aidKey, inputEl) {
         const subfileControlName = SubfileController.getClosestSubfileCtrlName(inputEl);
         if (subfileControlName) {
-            const sflCtlStore = SubfilePagingStore.getSflCtlStore(subfileControlName);
-            if (sflCtlStore) {
+            const sflCtrlStore = SubfilePagingStore.getSflCtlStore(subfileControlName);
+            if (sflCtrlStore) {
 
                 if (aidKey === "PgUp") {
-                    if (sflCtlStore.sflRecords.from === 0 && aidKeyHelper.isEnabled(AidKeyMapIndex.PageUp)) {
+                    if (sflCtrlStore.current && sflCtrlStore.current.topRrn === 0 && aidKeyHelper.isEnabled(AidKeyMapIndex.PageUp)) {
                         return { aidKeyToPush: aidKey, shouldCancel: true }; // We know there would be more records above, post PgUp
                     }
                 }
                 else { // aidKey === "PgDn"
-                    if (sflCtlStore.sflRecords.isLastPage === "true" && aidKeyHelper.isEnabled(AidKeyMapIndex.PageDown)) {
+                    if (sflCtrlStore.sflRecords.isLastPage === "true" && aidKeyHelper.isEnabled(AidKeyMapIndex.PageDown)) {
                         return { aidKeyToPush: aidKey, shouldCancel: true }; // We know there would be more records above, post PgDn
                     }
                 }
 
-                return { aidKeyToPush: aidKey, shouldCancel: true, useAjax: true, sflCtlStore: sflCtlStore };
+                return { aidKeyToPush: aidKey, shouldCancel: true, useAjax: true, sflCtlStore: sflCtrlStore };
             }
         }
 
