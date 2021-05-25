@@ -159,8 +159,13 @@ class Kbd {
 }
 
 class FoldDrop {
-    static processCadidateKey(aidKey, inputEl) {
-        const subfileControlName = SubfileController.getClosestSubfileCtrlName(inputEl);
+    static processCadidateKey(aidKey, eventSrcEl) {
+        let subfileControlName = SubfileController.getClosestSubfileCtrlName(eventSrcEl);
+
+        if (!subfileControlName) { // No subfile has been selected ... look for first one.
+            subfileControlName = SubfileController.getFirstSubfileCtrlName();
+        }
+
         if (subfileControlName) {
             const sflCtlStore = SubfilePagingStore.getSflCtlStore(subfileControlName);
             if (sflCtlStore && aidKey === sflCtlStore.fldDrop.aidKey) {
@@ -168,7 +173,7 @@ class FoldDrop {
             }
         }
 
-        return null; // May need more code ...
+        return null;
     }
 }
 
