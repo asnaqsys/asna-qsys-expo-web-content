@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) ASNA, Inc. and its affiliates.
  *
  * This source code is licensed under the MIT license found in the
@@ -190,6 +190,10 @@ class Kbd {
 
     isPgDn(keyCode) {
         return keyCode === KEY_CODE_PAGE_DOWN;
+    }
+    
+    showInvalidRollAlert() {
+        PageAlert.show(KEY_NOT_VALID_MSG.PgUp_PgDown, OK_TEXT);
     }
 
     static isTextArea(el) {
