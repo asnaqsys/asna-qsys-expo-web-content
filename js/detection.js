@@ -8,19 +8,20 @@
 export { BrowserInfo };
 
 class BrowserInfo {
-    static NavigatorPlatform() {
+    static navigatorPlatform() {
         const platform = navigator.platform || navigator.userAgentData.platform;
         return platform;
     }
 
-    static IsDesktop() {
+    static isDesktop() {
         // See: https://stackoverflow.com/questions/19877924/what-is-the-list-of-possible-values-for-navigator-platform-as-of-today
-        const platform = BrowserInfo.NavigatorPlatform();
+        const platform = BrowserInfo.navigatorPlatform();
         if (typeof platform !== 'string' || // Not likely Mobile device
-            platform === '') // FireFox - assume runs on Desktop.
+            platform === '') // FireFox - assume it runs on Desktop.
             return true;
         if (!platform.startsWith) { // Very old device, assume Desktop.
+            return true;
         }
-        return platform.startsWith("Win") || platform.startsWith("Mac");
+        return platform.startsWith("Win") || platform.startsWith("Mac"); // Two OS we care about.
     }
 }
