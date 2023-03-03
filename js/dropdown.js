@@ -6,9 +6,12 @@
  */
 
 export { theDropDown as DropDown };
+export { theContextMenu as ContextMenu };
 
 import { AsnaDataAttrName } from './asna-data-attr.js';
 import { StringExt } from './string.js';
+import { DdsGrid } from './dds-grid.js';
+import { SubfileController } from './subfile-paging/dom-init.js';
 
 class DropDown {
     initBoxes() {
@@ -177,4 +180,157 @@ class DropDown {
     }
 }
 
+const MENU_NAV_SELECTOR = 'nav.dds-menu';
+
+class ContextMenu {
+    constructor() {
+        this.initData = [];
+        this.list = [];
+    }
+
+    add(record, menu) {
+        this.initData.push({ record: record, menu: menu });
+    }
+
+    prepare(main) {
+        if (!main) { return; }
+
+        this.initData.forEach((data) => {
+            const menuEl = ContextMenu.createMenu(main, data);
+            if (menuEl) {
+                this.list.push(menuEl);
+            }
+        });
+    }
+
+    static createMenu(main, menuData) {
+        const leftTop = ContextMenu.findRelPosition(main, menuData);
+
+        if (!leftTop) { return null; }
+
+        const div = document.createElement('div');
+        div.classList.add('dds-menu-anchor');
+        div.style.position = 'absolute';
+        div.style.left = `${leftTop.l}px`;
+        div.style.top = `${leftTop.t}px`;
+
+        const button = document.createElement('button');
+        const nav = document.createElement('nav');
+        const ul = document.createElement('ul');
+
+        button.type = 'button';
+        button.className = 'dds-menu-anchor';
+        button.innerText = '☰';
+        button.addEventListener('click', (e) => {
+            const me = e.target;
+            const menu = me.parentElement;
+            if (menu && menu._row) {
+                const row = menu._row;
+                const recordsContainer = row.closest('div[data-asna-row]');
+                if (recordsContainer) {
+                    SubfileController.setCurrentSelection(recordsContainer, menu._row, true);
+                }
+            }
+            const nav = me.parentElement.querySelector(MENU_NAV_SELECTOR);
+            if (nav) {
+                nav.style.display = 'inline-block';
+            }
+        });
+        button.addEventListener('mouseover', (e) => {
+            const me = e.target;
+            const menu = me.parentElement; 
+            if (menu && menu._row) {
+                menu._row.classList.add('dds-subfile-candidate-current-record');
+            }
+        });
+
+        nav.className = 'dds-menu';
+
+        div.appendChild(button);
+        div.appendChild(nav);
+
+        nav.appendChild(ul);
+
+        menuData.menu.forEach((optionText) => {
+            const item = document.createElement('li');
+            const menuButton = document.createElement('button');
+            menuButton.type = 'button';
+            item.appendChild(menuButton);
+
+            menuButton.innerText = optionText;
+            menuButton.addEventListener('click', (e) => {
+                const me = e.target;
+                // const form = me.form;
+                const nav = me.closest(MENU_NAV_SELECTOR);
+                if (nav) {
+                    nav.style.display = 'none';
+                }
+                const row = nav.parentElement._row; // me.closest('div[class~=dds-grid-row]');
+                if (row) {
+                    const inputs = row.querySelectorAll('input[name]:not([type="hidden"])');
+                    if (inputs) {
+                        let inputName = '';
+                        inputs.forEach((input) => {
+                            const name = input.getAttribute('name');
+                            if (name.endsWith('.SFSEL')) {
+                                inputName = name;
+                            }
+                        });
+                        if (inputName) {
+                            setTimeout(() => {
+                                asnaExpo.page.pushKey('Enter', inputName, '2');
+                            }, 1);
+                        }
+                    }
+                }
+            });
+            ul.appendChild(item);
+        });
+
+        const menu = main.appendChild(div);
+
+        const recordsContainer = DdsGrid.findRowSpanDiv(menuData.record);
+        if (recordsContainer) {
+            const rows = SubfileController.selectAllRowsIncludeTR(recordsContainer);
+            rows.forEach((row) => {
+                row.addEventListener('mouseover', () => {
+                    ContextMenu.collapse(menu);
+                    ContextMenu.positionAtRow(menu, row);
+                });
+            });
+        }
+
+        return menu;
+    }
+
+    static findRelPosition(main, menu) {
+        // Temp !!! -- should use menu.name to find the record first ...
+        const targets = main.querySelectorAll('div[data-asna-content-menu]');
+        if (!targets || !targets.length) { return null; }
+        const target = targets[0]; // Temp !!! - use the first.
+        // const tp = target.parentNode;
+
+        const rTarget = target.getBoundingClientRect();
+
+        return { l: rTarget.left, t: rTarget.top };
+    }
+
+    static collapse(menu) {
+        const nav = menu.querySelector(MENU_NAV_SELECTOR);
+        if (nav) {
+            nav.style.display = 'none';
+        }
+    }
+
+    static positionAtRow(menu, row) {
+        const rowRect = row.getBoundingClientRect();
+        menu.style.top = `${rowRect.top}px`;
+        if (menu._row) {
+            menu._row.classList.remove('dds-subfile-candidate-current-record');
+        }
+        menu._row = row;
+    }
+}
+
 const theDropDown = new DropDown();
+const theContextMenu = new ContextMenu();

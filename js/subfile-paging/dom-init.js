@@ -13,6 +13,7 @@ import { DdsGrid } from '../dds-grid.js';
 import { Base64 } from '../base-64.js';
 import { AsnaDataAttrName } from '../asna-data-attr.js';
 import { FeedbackArea } from '../feedback-area.js';
+import { ContextMenu } from '../dropdown.js';
 
 const HIDDEN_NAME_FOLD_LINES_PER_RECORD = 'fold-lines-per-record';
 
@@ -50,6 +51,7 @@ class SubfileController {
                         if (typeof initData.sflRecords.allowsAjax === 'undefined' ) {
                             initData.sflRecords.allowsAjax = true;
                         }
+                        if (initData.menu && initData.menu.col > 0) { ContextMenu.add(initData.name, initData.menu.options); }
                         const sflCtrlStore = SubfilePagingStore.register(initData);
                         if (!SubfileController.hasNestedSflController(sflcDiv)) {
                             let recordsContainer = DdsGrid.findRowSpanDiv(initData.name, sflcDiv);
@@ -207,17 +209,13 @@ class SubfileController {
             if (inputBehaviour.cueCurrentRecord) {
                 row.addEventListener('mouseout', () => {
                     row.classList.remove(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
-                    // SubfileController.hideIconsInRow(row);
                 });
                 row.addEventListener('mouseover', () => {
                     row.classList.add(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
-                    // SubfileController.showIconsInRow(row);
                 });
-
-                // SubfileController.hideIconsInRow(row);
             }
 
-            const cueCurrentRecord = inputBehaviour.clickSetsCurrentRecord
+            const cueCurrentRecord = inputBehaviour.clickSetsCurrentRecord;
             row.addEventListener('click', (evt) => {
                 SubfileController.setCurrentSelection(recordsContainer, row, cueCurrentRecord);
                 const targetTagName = evt.target.tagName;
@@ -415,22 +413,6 @@ class SubfileController {
 
         if (aidKey) {
             window.asnaExpo.page.pushKey(aidKey, fieldName, targetValue);
-        }
-    }
-
-    static hideIconsInRow(row) {
-        const svgInRow = row.querySelectorAll('svg');
-
-        for (let k = 0, lk = svgInRow.length; k < lk; k++) {
-            svgInRow[k].classList.add('icon-in-not-selected-row');
-        }
-    }
-
-    static showIconsInRow(row) {
-        const svgInRow = row.querySelectorAll('svg');
-
-        for (let k = 0, lk = svgInRow.length; k < lk; k++) {
-            svgInRow[k].classList.remove('icon-in-not-selected-row');
         }
     }
 
