@@ -265,22 +265,33 @@ class ContextMenu {
                 if (nav) {
                     nav.style.display = 'none';
                 }
-                const row = nav.parentElement._row; // me.closest('div[class~=dds-grid-row]');
+                const row = nav.parentElement._row; 
                 if (row) {
-                    const inputs = row.querySelectorAll('input[name]:not([type="hidden"])');
-                    if (inputs) {
-                        let inputName = '';
-                        inputs.forEach((input) => {
-                            const name = input.getAttribute('name');
-                            if (Subfile.matchRowFieldName(name, menuOption.focusField)) {
-                                inputName = name;
+                    let virtRowCol = menuOption.vRowCol;
+                    if (menuOption.focusField) {
+                        const inputs = row.querySelectorAll('input[name]:not([type="hidden"])');
+                        if (inputs) {
+                            let inputName = '';
+                            inputs.forEach((input) => {
+                                const name = input.getAttribute('name');
+                                if (Subfile.matchRowFieldName(name, menuOption.focusField)) {
+                                    inputName = name;
+                                    if (!virtRowCol) {
+                                        virtRowCol = input.getAttribute(AsnaDataAttrName.ROWCOL);
+                                    }
+                                }
+                            });
+                            if (inputName) {
+                                setTimeout(() => {
+                                    asnaExpo.page.pushKey(menuOption.aidKeyName, inputName, menuOption.fieldValue, virtRowCol);
+                                }, 1);
                             }
-                        });
-                        if (inputName) {
-                            setTimeout(() => {
-                                asnaExpo.page.pushKey(menuOption.aidKeyName, inputName, menuOption.fieldValue);
-                            }, 1);
                         }
+                    }
+                    else if (menuOption.aidKeyName) {
+                        setTimeout(() => {
+                            asnaExpo.page.pushKey(menuOption.aidKeyName, "", "", virtRowCol);
+                        }, 1);
                     }
                 }
             });
