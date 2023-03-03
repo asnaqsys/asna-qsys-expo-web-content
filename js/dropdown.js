@@ -253,48 +253,54 @@ class ContextMenu {
 
         menuData.menu.forEach((menuOption) => {
             const item = document.createElement('li');
-            const menuButton = document.createElement('button');
-            menuButton.type = 'button';
-            item.appendChild(menuButton);
+            if (menuOption.text === "--" && menuOption.aidKeyName === "None" ) {
+                item.className = 'dds-menu-divider';
+                const hRule = document.createElement('hr');
+                item.appendChild(hRule);
+            }
+            else {
+                const menuButton = document.createElement('button');
+                menuButton.type = 'button';
+                item.appendChild(menuButton);
 
-            menuButton.innerText = menuOption.text;
-            menuButton.addEventListener('click', (e) => {
-                const me = e.target;
-                // const form = me.form;
-                const nav = me.closest(MENU_NAV_SELECTOR);
-                if (nav) {
-                    nav.style.display = 'none';
-                }
-                const row = nav.parentElement._row; 
-                if (row) {
-                    let virtRowCol = menuOption.vRowCol;
-                    if (menuOption.focusField) {
-                        const inputs = row.querySelectorAll('input[name]:not([type="hidden"])');
-                        if (inputs) {
-                            let inputName = '';
-                            inputs.forEach((input) => {
-                                const name = input.getAttribute('name');
-                                if (Subfile.matchRowFieldName(name, menuOption.focusField)) {
-                                    inputName = name;
-                                    if (!virtRowCol) {
-                                        virtRowCol = input.getAttribute(AsnaDataAttrName.ROWCOL);
+                menuButton.innerText = menuOption.text;
+                menuButton.addEventListener('click', (e) => {
+                    const me = e.target;
+                    const nav = me.closest(MENU_NAV_SELECTOR);
+                    if (nav) {
+                        nav.style.display = 'none';
+                    }
+                    const row = nav.parentElement._row;
+                    if (row) {
+                        let virtRowCol = menuOption.vRowCol;
+                        if (menuOption.focusField) {
+                            const inputs = row.querySelectorAll('input[name]:not([type="hidden"])');
+                            if (inputs) {
+                                let inputName = '';
+                                inputs.forEach((input) => {
+                                    const name = input.getAttribute('name');
+                                    if (Subfile.matchRowFieldName(name, menuOption.focusField)) {
+                                        inputName = name;
+                                        if (!virtRowCol) {
+                                            virtRowCol = input.getAttribute(AsnaDataAttrName.ROWCOL);
+                                        }
                                     }
+                                });
+                                if (inputName) {
+                                    setTimeout(() => {
+                                        asnaExpo.page.pushKey(menuOption.aidKeyName, inputName, menuOption.fieldValue, virtRowCol);
+                                    }, 1);
                                 }
-                            });
-                            if (inputName) {
-                                setTimeout(() => {
-                                    asnaExpo.page.pushKey(menuOption.aidKeyName, inputName, menuOption.fieldValue, virtRowCol);
-                                }, 1);
                             }
                         }
+                        else if (menuOption.aidKeyName) {
+                            setTimeout(() => {
+                                asnaExpo.page.pushKey(menuOption.aidKeyName, "", "", virtRowCol);
+                            }, 1);
+                        }
                     }
-                    else if (menuOption.aidKeyName) {
-                        setTimeout(() => {
-                            asnaExpo.page.pushKey(menuOption.aidKeyName, "", "", virtRowCol);
-                        }, 1);
-                    }
-                }
-            });
+                });
+            }
             ul.appendChild(item);
         });
 

@@ -542,6 +542,16 @@ body {
     font-weight: 600;
 }
 
+.dds-menu-divider {
+    margin-top: -0.3em;
+    height: 0.3em;
+}
+
+.dds-menu-divider > hr {
+    border-style: solid;
+    border-bottom-color: royalblue;
+}
+
 /*-------------------------------------------*\
     Synon Escape
 
