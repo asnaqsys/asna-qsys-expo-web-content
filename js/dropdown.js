@@ -11,7 +11,7 @@ export { theContextMenu as ContextMenu };
 import { AsnaDataAttrName } from './asna-data-attr.js';
 import { StringExt } from './string.js';
 import { DdsGrid } from './dds-grid.js';
-import { SubfileController } from './subfile-paging/dom-init.js';
+import { EXPO_SUBFILE_CLASS, SubfileController, Subfile } from './subfile-paging/dom-init.js';
 
 class DropDown {
     initBoxes() {
@@ -240,7 +240,7 @@ class ContextMenu {
             const me = e.target;
             const menu = me.parentElement; 
             if (menu && menu._row) {
-                menu._row.classList.add('dds-subfile-candidate-current-record');
+                menu._row.classList.add(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
             }
         });
 
@@ -251,13 +251,13 @@ class ContextMenu {
 
         nav.appendChild(ul);
 
-        menuData.menu.forEach((optionText) => {
+        menuData.menu.forEach((menuOption) => {
             const item = document.createElement('li');
             const menuButton = document.createElement('button');
             menuButton.type = 'button';
             item.appendChild(menuButton);
 
-            menuButton.innerText = optionText;
+            menuButton.innerText = menuOption.text;
             menuButton.addEventListener('click', (e) => {
                 const me = e.target;
                 // const form = me.form;
@@ -272,13 +272,13 @@ class ContextMenu {
                         let inputName = '';
                         inputs.forEach((input) => {
                             const name = input.getAttribute('name');
-                            if (name.endsWith('.SFSEL')) {
+                            if (Subfile.matchRowFieldName(name, menuOption.focusField)) {
                                 inputName = name;
                             }
                         });
                         if (inputName) {
                             setTimeout(() => {
-                                asnaExpo.page.pushKey('Enter', inputName, '2');
+                                asnaExpo.page.pushKey(menuOption.aidKeyName, inputName, menuOption.fieldValue);
                             }, 1);
                         }
                     }
@@ -324,11 +324,12 @@ class ContextMenu {
 
     static positionAtRow(menu, row) {
         const rowRect = row.getBoundingClientRect();
+        const lastRow = menu._row;
         menu.style.top = `${rowRect.top}px`;
-        if (menu._row) {
-            menu._row.classList.remove('dds-subfile-candidate-current-record');
-        }
         menu._row = row;
+        if (lastRow) {
+            lastRow.classList.remove(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
+        }
     }
 }
 

@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-export { SubfileController, Subfile };
+export { SubfileController, Subfile, EXPO_SUBFILE_CLASS };
 
 import { SubfilePagingStore, SubfileState, InputState } from './paging-store.js';
 import { PositionCursor } from '../page-position-cursor.js';
@@ -582,5 +582,22 @@ class Subfile {
         if (eos > 0) {
             return parts[1].substr(0, eos);
         }
+    }
+
+    static matchRowFieldName(fieldName, rowfieldNameCand) {
+        if (!fieldName) { return false; }
+        const iStart = fieldName.indexOf("[");
+        const iEnd = fieldName.indexOf("]");
+        if (iStart < 0 || iEnd < 0 || !(iStart < iEnd) || !(fieldName.length > iEnd + 1) ) {
+            return fieldName === rowfieldNameCand;
+        }
+        const ciStart = rowfieldNameCand.indexOf("[");
+        const ciEnd = rowfieldNameCand.indexOf("]");
+        if (ciStart < 0 || ciEnd < 0 || !(ciStart < ciEnd) || !(rowfieldNameCand.length > ciEnd + 1)) {
+            return false;
+        }
+
+        return fieldName.substr(0, iStart) === rowfieldNameCand.substr(0, ciStart) && 
+            fieldName.substr(iEnd+1) === rowfieldNameCand.substr(ciEnd+1);
     }
 }
