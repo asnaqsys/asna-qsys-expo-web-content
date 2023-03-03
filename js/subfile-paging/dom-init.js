@@ -51,7 +51,7 @@ class SubfileController {
                         if (typeof initData.sflRecords.allowsAjax === 'undefined' ) {
                             initData.sflRecords.allowsAjax = true;
                         }
-                        if (initData.menu && initData.menu.col > 0) { ContextMenu.add(initData.name, initData.menu.options); }
+                        if (initData.menu && initData.menu.list) { ContextMenu.add(initData.name, initData.menu.list); }
                         const sflCtrlStore = SubfilePagingStore.register(initData);
                         if (!SubfileController.hasNestedSflController(sflcDiv)) {
                             let recordsContainer = DdsGrid.findRowSpanDiv(initData.name, sflcDiv);

@@ -188,25 +188,27 @@ class ContextMenu {
         this.list = [];
     }
 
-    add(record, menu) {
-        this.initData.push({ record: record, menu: menu });
+    add(record, menuList) {
+        menuList.forEach((menu) => {
+            this.initData.push({ record: record, menu: menu });
+        });
     }
 
     prepare(main) {
         if (!main) { return; }
 
         this.initData.forEach((data) => {
-            const menuEl = ContextMenu.createMenu(main, data);
+            const menuEl = ContextMenu.createMenu(main, data.record, data.menu);
             if (menuEl) {
                 this.list.push(menuEl);
             }
         });
     }
 
-    static createMenu(main, menuData) {
-        const leftTop = ContextMenu.findRelPosition(main, menuData);
+    static createMenu(main, recordName, menuData) {
+        const leftTop = ContextMenu.findRelPosition(main, recordName, menuData);
 
-        if (!leftTop) { return null; }
+        if (!leftTop || !leftTop.l) { return null; }
 
         const div = document.createElement('div');
         div.classList.add('dds-menu-anchor');
@@ -251,7 +253,7 @@ class ContextMenu {
 
         nav.appendChild(ul);
 
-        menuData.menu.forEach((menuOption) => {
+        menuData.options.forEach((menuOption) => {
             const item = document.createElement('li');
             if (menuOption.text === "--" && menuOption.aidKeyName === "None" ) {
                 item.className = 'dds-menu-divider';
@@ -293,7 +295,7 @@ class ContextMenu {
                                 }
                             }
                         }
-                        else if (menuOption.aidKeyName) {
+                        else if (menuOption.aidKeyName !== "None") {
                             setTimeout(() => {
                                 asnaExpo.page.pushKey(menuOption.aidKeyName, "", "", virtRowCol);
                             }, 1);
@@ -306,7 +308,7 @@ class ContextMenu {
 
         const menu = main.appendChild(div);
 
-        const recordsContainer = DdsGrid.findRowSpanDiv(menuData.record);
+        const recordsContainer = DdsGrid.findRowSpanDiv(recordName);
         if (recordsContainer) {
             const rows = SubfileController.selectAllRowsIncludeTR(recordsContainer);
             rows.forEach((row) => {
@@ -320,16 +322,25 @@ class ContextMenu {
         return menu;
     }
 
-    static findRelPosition(main, menu) {
-        // Temp !!! -- should use menu.name to find the record first ...
-        const targets = main.querySelectorAll('div[data-asna-content-menu]');
-        if (!targets || !targets.length) { return null; }
-        const target = targets[0]; // Temp !!! - use the first.
-        // const tp = target.parentNode;
+    static findRelPosition(main, recordName, menuData) {
+        // TO-DO: Use recordName to locate record (subfile controller)
+        let result = {};
 
-        const rTarget = target.getBoundingClientRect();
+        const placeHolders = main.querySelectorAll('div[data-asna-content-menu]');
+        if (!placeHolders || !placeHolders.length) { return result; }
 
-        return { l: rTarget.left, t: rTarget.top };
+
+        placeHolders.forEach((ph) => {
+            if (!result.l) {
+                const gridCol = ph.style.gridColumnStart;
+                if (gridCol && parseInt(gridCol, 10) === menuData.col) {
+                    const rMenu = ph.getBoundingClientRect();
+                    result = { l: rMenu.left, t: rMenu.top };
+                }
+            }
+        });
+
+        return result;
     }
 
     static collapse(menu) {
