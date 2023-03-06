@@ -12,6 +12,7 @@ import { AsnaDataAttrName } from './asna-data-attr.js';
 import { StringExt } from './string.js';
 import { DdsGrid } from './dds-grid.js';
 import { EXPO_SUBFILE_CLASS, SubfileController, Subfile } from './subfile-paging/dom-init.js';
+import { Base64 } from './base-64.js';
 
 class DropDown {
     initBoxes() {
@@ -197,6 +198,20 @@ class ContextMenu {
         });
     }
 
+    initNonSubfileMenus(main) {
+        const recordMenus = main.querySelectorAll(`div[${AsnaDataAttrName.RECORD_CONTEXT_MENUS}]`);
+        if (recordMenus && recordMenus.length) {
+            recordMenus.forEach((record) => {
+                const recordName = record.getAttribute(AsnaDataAttrName.RECORD);
+                const menuEncodedData = record.getAttribute(AsnaDataAttrName.RECORD_CONTEXT_MENUS);
+                const menuInitData = Base64.decode(menuEncodedData);
+                const initData = JSON.parse(menuInitData);
+
+                this.add(recordName, initData);
+            });
+        }
+    }
+
     prepare(main) {
         if (!main) { return; }
 
@@ -247,10 +262,7 @@ class ContextMenu {
                     SubfileController.setCurrentSelection(recordsContainer, menu._row, true);
                 }
             }
-            const nav = me.parentElement.querySelector(MENU_NAV_SELECTOR);
-            if (nav) {
-                nav.style.display = 'inline-block';
-            }
+            ContextMenu.toggleVisibility(me.parentElement.querySelector(MENU_NAV_SELECTOR));
         });
 
         if (isSubfile) {
@@ -286,37 +298,13 @@ class ContextMenu {
                 menuButton.addEventListener('click', (e) => {
                     const me = e.target;
                     const nav = me.closest(MENU_NAV_SELECTOR);
-                    if (nav) {
-                        nav.style.display = 'none';
-                    }
-                    const row = nav.parentElement._row;
-                    if (row) {
-                        let virtRowCol = menuOption.vRowCol;
-                        if (menuOption.focusField) {
-                            const inputs = row.querySelectorAll('input[name]:not([type="hidden"])');
-                            if (inputs) {
-                                let inputName = '';
-                                inputs.forEach((input) => {
-                                    const name = input.getAttribute('name');
-                                    if (Subfile.matchRowFieldName(name, menuOption.focusField)) {
-                                        inputName = name;
-                                        if (!virtRowCol) {
-                                            virtRowCol = input.getAttribute(AsnaDataAttrName.ROWCOL);
-                                        }
-                                    }
-                                });
-                                if (inputName) {
-                                    setTimeout(() => {
-                                        asnaExpo.page.pushKey(menuOption.aidKeyName, inputName, menuOption.fieldValue, virtRowCol);
-                                    }, 1);
-                                }
-                            }
-                        }
-                        else if (menuOption.aidKeyName !== "None") {
-                            setTimeout(() => {
-                                asnaExpo.page.pushKey(menuOption.aidKeyName, "", "", virtRowCol);
-                            }, 1);
-                        }
+                    if (nav) { nav.style.display = 'none'; }
+                    let ancestorEl = nav.parentElement._row;
+
+                    if (!ancestorEl) { ancestorEl = nav.parentElement._record; }
+
+                    if (ancestorEl) {
+                        ContextMenu.doActionDescendant(ancestorEl, menuOption);
                     }
                 });
             }
@@ -334,14 +322,60 @@ class ContextMenu {
                 });
             });
         }
+        else {
+            menu._record = recordEl;
+            recordEl.addEventListener('click', () => ContextMenu.collapse(menu) );
+        }
 
         return menu;
+    }
+
+    static toggleVisibility(nav) {
+        if (!nav) { return; }
+        switch (nav.style.display) {
+            case '':
+            case 'none':
+                nav.style.display = 'inline-block';
+                break;
+            case 'inline-block':
+                nav.style.display = 'none';
+                break;
+        }
+    }
+
+    static doActionDescendant(ancestorEl, menuOption) {
+        let virtRowCol = menuOption.vRowCol;
+        if (menuOption.focusField) {
+            const inputs = ancestorEl.querySelectorAll('input[name]:not([type="hidden"])');
+            if (inputs) {
+                let inputName = '';
+                inputs.forEach((input) => {
+                    const name = input.getAttribute('name');
+                    if (Subfile.matchRowFieldName(name, menuOption.focusField)) {
+                        inputName = name;
+                        if (!virtRowCol) {
+                            virtRowCol = input.getAttribute(AsnaDataAttrName.ROWCOL);
+                        }
+                    }
+                });
+                if (inputName) {
+                    setTimeout(() => {
+                        asnaExpo.page.pushKey(menuOption.aidKeyName, inputName, menuOption.fieldValue, virtRowCol);
+                    }, 1);
+                }
+            }
+        }
+        else if (menuOption.aidKeyName !== "None") {
+            setTimeout(() => {
+                asnaExpo.page.pushKey(menuOption.aidKeyName, "", "", virtRowCol);
+            }, 1);
+        }
     }
 
     static findRelPosition(container, menuData) {
         let result = {};
 
-        const placeHolders = container.querySelectorAll('div[data-asna-content-menu]');
+        const placeHolders = container.querySelectorAll(`div[${AsnaDataAttrName.CONTEXT_MENU}]`);
         if (!placeHolders || !placeHolders.length) { return result; }
 
         placeHolders.forEach((ph) => {

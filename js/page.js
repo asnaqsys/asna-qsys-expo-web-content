@@ -142,6 +142,7 @@ class Page {
             PositionCursor.toDefaultField(thisForm);
         }
         this.initIcons(sflEndIcons);
+        ContextMenu.initNonSubfileMenus(main);
         ContextMenu.prepare(main);
     }
 
@@ -464,6 +465,11 @@ class Page {
 
         if (virtualRowCol) {
             FeedbackArea.updateRowColFeedback(form, virtualRowCol);
+        }
+
+        if (aidKeyToPush === "None") { // Context Menu option requesting to not submit.
+            this.suspendAsyncPost = false;
+            return;
         }
 
         FeedbackArea.updatePushedKey(form, aidKeyToPush);

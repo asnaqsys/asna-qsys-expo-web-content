@@ -62,6 +62,10 @@ const AsnaDataAttrName = {
     // Message related
     VOLATILE_MSG: 'data-asna-volatile-msg',
 
+    // Context menus
+    RECORD_CONTEXT_MENUS: 'data-asna-context-menus',    // Excludes subfile controller record.
+    CONTEXT_MENU:  'data-asna-content-menu',
+
     // Misc
     AUTO_POSTBACK: 'data-asna-autopostback',
     CHECK_MANDATORY: 'data-asna-check-mandatory',
