@@ -213,7 +213,14 @@ class ContextMenu {
     }
 
     static createMenu(main, recordName, menuData) {
-        const leftTop = ContextMenu.findRelPosition(main, menuData);
+        const recordEl = main.querySelector(`div[${AsnaDataAttrName.RECORD}='${recordName}']`);
+
+        if (!recordEl) { return null; }
+
+        const sflRecordsContainer = DdsGrid.findRowSpanDiv(recordName, recordEl);
+        const isSubfile = sflRecordsContainer !== null;
+
+        const leftTop = ContextMenu.findRelPosition(isSubfile ? sflRecordsContainer : recordEl, menuData);
 
         if (!leftTop || !Object.keys(leftTop).length) { return null; }
 
@@ -245,13 +252,16 @@ class ContextMenu {
                 nav.style.display = 'inline-block';
             }
         });
-        button.addEventListener('mouseover', (e) => {
-            const me = e.target;
-            const menu = me.parentElement; 
-            if (menu && menu._row) {
-                menu._row.classList.add(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
-            }
-        });
+
+        if (isSubfile) {
+            button.addEventListener('mouseover', (e) => {
+                const me = e.target;
+                const menu = me.parentElement;
+                if (menu && menu._row) {
+                    menu._row.classList.add(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
+                }
+            });
+        }
 
         nav.className = 'dds-menu';
 
@@ -315,9 +325,8 @@ class ContextMenu {
 
         const menu = main.appendChild(div);
 
-        const subfileRecordsContainer = DdsGrid.findRowSpanDiv(recordName);
-        if (subfileRecordsContainer) {
-            const rows = SubfileController.selectAllRowsIncludeTR(subfileRecordsContainer);
+        if (isSubfile) {
+            const rows = SubfileController.selectAllRowsIncludeTR(sflRecordsContainer);
             rows.forEach((row) => {
                 row.addEventListener('mouseover', () => {
                     ContextMenu.collapse(menu);
@@ -329,10 +338,10 @@ class ContextMenu {
         return menu;
     }
 
-    static findRelPosition(main, menuData) {
+    static findRelPosition(container, menuData) {
         let result = {};
 
-        const placeHolders = main.querySelectorAll('div[data-asna-content-menu]');
+        const placeHolders = container.querySelectorAll('div[data-asna-content-menu]');
         if (!placeHolders || !placeHolders.length) { return result; }
 
         placeHolders.forEach((ph) => {
