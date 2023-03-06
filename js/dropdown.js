@@ -184,31 +184,38 @@ const MENU_NAV_SELECTOR = 'nav.dds-menu';
 
 class ContextMenu {
     constructor() {
-        this.initData = [];
+        this.menusByRecord = [];
         this.list = [];
     }
 
     add(record, menuList) {
         menuList.forEach((menu) => {
-            this.initData.push({ record: record, menu: menu });
+            if (!this.menusByRecord[record]) {
+                this.menusByRecord[record] = [];
+            }
+            this.menusByRecord[record].push(menu);
         });
     }
 
     prepare(main) {
         if (!main) { return; }
 
-        this.initData.forEach((data) => {
-            const menuEl = ContextMenu.createMenu(main, data.record, data.menu);
-            if (menuEl) {
-                this.list.push(menuEl);
-            }
-        });
+        for (let i = 0, l = Object.keys(this.menusByRecord).length; i < l; i++) {
+            const recordName = Object.keys(this.menusByRecord)[i];
+            const recordMenus = this.menusByRecord[recordName];
+            recordMenus.forEach((menu) => {
+                const menuEl = ContextMenu.createMenu(main, recordName, menu);
+                if (menuEl) {
+                    this.list.push(menuEl);
+                }
+            });
+        }
     }
 
     static createMenu(main, recordName, menuData) {
-        const leftTop = ContextMenu.findRelPosition(main, recordName, menuData);
+        const leftTop = ContextMenu.findRelPosition(main, menuData);
 
-        if (!leftTop || !leftTop.l) { return null; }
+        if (!leftTop || !Object.keys(leftTop).length) { return null; }
 
         const div = document.createElement('div');
         div.classList.add('dds-menu-anchor');
@@ -308,9 +315,9 @@ class ContextMenu {
 
         const menu = main.appendChild(div);
 
-        const recordsContainer = DdsGrid.findRowSpanDiv(recordName);
-        if (recordsContainer) {
-            const rows = SubfileController.selectAllRowsIncludeTR(recordsContainer);
+        const subfileRecordsContainer = DdsGrid.findRowSpanDiv(recordName);
+        if (subfileRecordsContainer) {
+            const rows = SubfileController.selectAllRowsIncludeTR(subfileRecordsContainer);
             rows.forEach((row) => {
                 row.addEventListener('mouseover', () => {
                     ContextMenu.collapse(menu);
@@ -322,16 +329,14 @@ class ContextMenu {
         return menu;
     }
 
-    static findRelPosition(main, recordName, menuData) {
-        // TO-DO: Use recordName to locate record (subfile controller)
+    static findRelPosition(main, menuData) {
         let result = {};
 
         const placeHolders = main.querySelectorAll('div[data-asna-content-menu]');
         if (!placeHolders || !placeHolders.length) { return result; }
 
-
         placeHolders.forEach((ph) => {
-            if (!result.l) {
+            if (!Object.keys(result).length) {
                 const gridCol = ph.style.gridColumnStart;
                 if (gridCol && parseInt(gridCol, 10) === menuData.col) {
                     const rMenu = ph.getBoundingClientRect();
