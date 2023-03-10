@@ -186,6 +186,7 @@ const MENU_NAV_SELECTOR = 'nav.dds-menu';
 class ContextMenu {
     constructor() {
         this.menusByRecord = [];
+        this.count = 0;
     }
 
     add(record, menuList) {
@@ -194,6 +195,7 @@ class ContextMenu {
                 this.menusByRecord[record] = [];
             }
             this.menusByRecord[record].push(menu);
+            this.count++;
         });
     }
 
@@ -223,8 +225,13 @@ class ContextMenu {
         }
     }
 
-    static preparePlaceHolder(main, recordName, menuData) {
+    hideMenus(root) {
+        if (this.count) {
+            ContextMenu.hidePopupMenus(root);
+        }
+    }
 
+    static preparePlaceHolder(main, recordName, menuData) {
         const recordEl = main.querySelector(`div[${AsnaDataAttrName.RECORD}='${recordName}']`);
 
         if (!recordEl) { return null; }
@@ -237,7 +244,6 @@ class ContextMenu {
 
         ContextMenu.appendMenuButton(ph, menuData);
         menuData._ph = ph;
-        // menuData._main = main;
 
         if (isSubfile) {
             const rows = SubfileController.selectAllRowsIncludeTR(sflRecordsContainer);
@@ -246,23 +252,6 @@ class ContextMenu {
                     ContextMenu.moveToSflRow(row, menuData._ph);
                 });
             });
-        }
-        else {
-        //    menu._record = recordEl;
-        //    recordEl.addEventListener('click', () => ContextMenu.collapse(menu));
-        }
-    }
-
-    static toggleVisibility(nav) {
-        if (!nav) { return; }
-        switch (nav.style.display) {
-            case '':
-            case 'none':
-                nav.style.display = 'inline-block';
-                break;
-            case 'inline-block':
-                nav.style.display = 'none';
-                break;
         }
     }
 
@@ -313,12 +302,6 @@ class ContextMenu {
         return result;
     }
 
-    static collapse(menu) {
-        const nav = menu.querySelector(MENU_NAV_SELECTOR);
-        if (nav) {
-            nav.style.display = 'none';
-        }
-    }
 
     static appendMenuButton(ph, menuData) {
         const button = document.createElement('button');
@@ -341,10 +324,17 @@ class ContextMenu {
                     }
                 }
 
+                ContextMenu.hidePopupMenus(row);
                 const menuPopup = button.querySelector('div.dds-menu-popup');
                 if (!menuPopup) {
                     const rect = ph.getBoundingClientRect();
                     ContextMenu.createPopup(button, rect.left + window.scrollX, rect.top + window.scrollY, menuData);
+                }
+                else {
+                    const nav = button.querySelector(MENU_NAV_SELECTOR);
+                    if (nav) {
+                        nav.style.display = 'block';
+                    }
                 }
             }
         });
@@ -369,7 +359,7 @@ class ContextMenu {
 
         menuData.options.forEach((menuOption) => {
             const item = document.createElement('li');
-            if (menuOption.text === "--" && menuOption.aidKeyName === "None") {
+            if (menuOption.text === '--' && menuOption.aidKeyName === 'None') {
                 item.className = 'dds-menu-divider';
                 const hRule = document.createElement('hr');
                 item.appendChild(hRule);
@@ -380,18 +370,17 @@ class ContextMenu {
                 item.appendChild(menuButton);
 
                 menuButton.innerText = menuOption.text;
-                menuButton._menuOption = menuOption
                 menuButton.addEventListener('click', (e) => {
+                    if (e.stopPropagation) {
+                        e.stopPropagation();
+                    }
+
                     const me = e.target;
                     const nav = me.closest(MENU_NAV_SELECTOR);
                     if (nav) { nav.style.display = 'none'; }
-                    const row = button._row;
-                    let ancestorEl = row;
 
-                    // if (!ancestorEl) { ancestorEl = nav.parentElement._record; }
-
-                    if (ancestorEl) {
-                        ContextMenu.doActionDescendant(ancestorEl, menuOption);
+                    if (button._row) {
+                        ContextMenu.doActionDescendant(button._row, menuOption);
                     }
                 });
             }
@@ -420,6 +409,11 @@ class ContextMenu {
         lastPh.removeChild(lastButton);
         ContextMenu.appendMenuButton(ph, menu);
         menu._ph = ph;
+    }
+
+    static hidePopupMenus(root) {
+        const openMenus = root.querySelectorAll(MENU_NAV_SELECTOR);
+        openMenus.forEach((popup) => { popup.style.display = 'none'; });
     }
 }
 

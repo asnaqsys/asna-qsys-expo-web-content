@@ -289,15 +289,24 @@ class Page {
     }
 
     handleWindowResizeEvent() {
-        DdsWindow.setVarBackgroundPosition();
+        const main = DdsWindow.setVarBackgroundPosition();
+        if (main) {
+            ContextMenu.hideMenus(main);
+        }
     }
 
     handleMainPanelScrollEvent(event) {
-        DdsWindow.setVarBackgroundPosition();
+        const main = DdsWindow.setVarBackgroundPosition();
+        if (main) {
+            ContextMenu.hideMenus(main);
+        }
     }
 
     handleDocScrollEvent(event) {
-        DdsWindow.setVarBackgroundPosition();
+        const main = DdsWindow.setVarBackgroundPosition();
+        if (main) {
+            ContextMenu.hideMenus(main);
+        }
     }
 
     handleAjaxGetRecordsResponseEvent(res) {
