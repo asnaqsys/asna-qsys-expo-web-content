@@ -186,7 +186,6 @@ const MENU_NAV_SELECTOR = 'nav.dds-menu';
 class ContextMenu {
     constructor() {
         this.menusByRecord = [];
-        this.list = [];
     }
 
     add(record, menuList) {
@@ -199,6 +198,7 @@ class ContextMenu {
     }
 
     initNonSubfileMenus(main) {
+        if (!main) { return; }
         const recordMenus = main.querySelectorAll(`div[${AsnaDataAttrName.RECORD_CONTEXT_MENUS}]`);
         if (recordMenus && recordMenus.length) {
             recordMenus.forEach((record) => {
@@ -214,20 +214,22 @@ class ContextMenu {
 
     prepare(main) {
         if (!main) { return; }
-
         for (let i = 0, l = Object.keys(this.menusByRecord).length; i < l; i++) {
             const recordName = Object.keys(this.menusByRecord)[i];
             const recordMenus = this.menusByRecord[recordName];
             recordMenus.forEach((menu) => {
-                const menuEl = ContextMenu.createMenu(main, recordName, menu);
-                if (menuEl) {
-                    this.list.push(menuEl);
-                }
+                //const menuEl = this.createMenu(main, recordName, menu);
+                //if (menuEl) {
+                //    this.list.push(menuEl);
+                //}
+
+                ContextMenu.preparePlaceHolder(main, recordName, menu);
             });
         }
     }
 
-    static createMenu(main, recordName, menuData) {
+    static preparePlaceHolder(main, recordName, menuData) {
+
         const recordEl = main.querySelector(`div[${AsnaDataAttrName.RECORD}='${recordName}']`);
 
         if (!recordEl) { return null; }
@@ -235,100 +237,37 @@ class ContextMenu {
         const sflRecordsContainer = DdsGrid.findRowSpanDiv(recordName, recordEl);
         const isSubfile = sflRecordsContainer !== null;
 
-        const leftTop = ContextMenu.findRelPosition(isSubfile ? sflRecordsContainer : recordEl, menuData);
+        const ph = ContextMenu.findPlaceholder(isSubfile ? sflRecordsContainer : recordEl, menuData);
+        if (!ph) { return; }
 
-        if (!leftTop || !Object.keys(leftTop).length) { return null; }
-
-        const div = document.createElement('div');
-        div.classList.add('dds-menu-anchor');
-        div.style.position = 'absolute';
-        div.style.left = `${leftTop.l}px`;
-        div.style.top = `${leftTop.t}px`;
-
-        const button = document.createElement('button');
-        const nav = document.createElement('nav');
-        const ul = document.createElement('ul');
-
-        button.type = 'button';
-        button.className = 'dds-menu-anchor';
-        button.innerText = '☰';
-        button.addEventListener('click', (e) => {
-            const me = e.target;
-            const menu = me.parentElement;
-            if (menu && menu._row) {
-                const row = menu._row;
-                const recordsContainer = row.closest('div[data-asna-row]');
-                if (recordsContainer) {
-                    SubfileController.setCurrentSelection(recordsContainer, menu._row, true);
-                }
-            }
-            ContextMenu.toggleVisibility(me.parentElement.querySelector(MENU_NAV_SELECTOR));
-        });
-
-        if (isSubfile) {
-            button.addEventListener('mouseover', (e) => {
-                const me = e.target;
-                const menu = me.parentElement;
-                if (menu && menu._row) {
-                    menu._row.classList.add(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
-                }
-            });
-        }
-
-        nav.className = 'dds-menu';
-
-        div.appendChild(button);
-        div.appendChild(nav);
-
-        nav.appendChild(ul);
-
-        menuData.options.forEach((menuOption) => {
-            const item = document.createElement('li');
-            if (menuOption.text === "--" && menuOption.aidKeyName === "None" ) {
-                item.className = 'dds-menu-divider';
-                const hRule = document.createElement('hr');
-                item.appendChild(hRule);
-            }
-            else {
-                const menuButton = document.createElement('button');
-                menuButton.type = 'button';
-                item.appendChild(menuButton);
-
-                menuButton.innerText = menuOption.text;
-                menuButton.addEventListener('click', (e) => {
-                    const me = e.target;
-                    const nav = me.closest(MENU_NAV_SELECTOR);
-                    if (nav) { nav.style.display = 'none'; }
-                    let ancestorEl = nav.parentElement._row;
-
-                    if (!ancestorEl) { ancestorEl = nav.parentElement._record; }
-
-                    if (ancestorEl) {
-                        ContextMenu.doActionDescendant(ancestorEl, menuOption);
-                    }
-                });
-            }
-            ul.appendChild(item);
-        });
-
-        const menu = main.appendChild(div);
+        ContextMenu.appendMenuButton(ph, menuData);
+        menuData._ph = ph;
 
         if (isSubfile) {
             const rows = SubfileController.selectAllRowsIncludeTR(sflRecordsContainer);
             rows.forEach((row) => {
                 row.addEventListener('mouseover', () => {
-                    ContextMenu.collapse(menu);
-                    ContextMenu.positionAtRow(menu, row);
+                    ContextMenu.moveToSflRow(row, menuData._ph /*ph*/);
                 });
             });
         }
         else {
-            menu._record = recordEl;
-            recordEl.addEventListener('click', () => ContextMenu.collapse(menu) );
+        //    menu._record = recordEl;
+        //    recordEl.addEventListener('click', () => ContextMenu.collapse(menu));
         }
-
-        return menu;
     }
+
+    repositionMenus() { // Delete me !!!
+        //this.list.forEach((menu) => {
+        //    const ph = menu._ph;
+        //    if (ph && menu.style) {
+        //        const rect = ph.getBoundingClientRect();
+        //        menu.style.left = `${rect.left + window.scrollX}px`;
+        //        menu.style.top = `${rect.top + window.scrollY}px`;
+        //    }
+        //});
+    }
+
 
     static toggleVisibility(nav) {
         if (!nav) { return; }
@@ -372,18 +311,17 @@ class ContextMenu {
         }
     }
 
-    static findRelPosition(container, menuData) {
-        let result = {};
+    static findPlaceholder(container, menuData) {
+        let result = null;
 
         const placeHolders = container.querySelectorAll(`div[${AsnaDataAttrName.CONTEXT_MENU}]`);
         if (!placeHolders || !placeHolders.length) { return result; }
 
         placeHolders.forEach((ph) => {
-            if (!Object.keys(result).length) {
+            if (!result) {
                 const gridCol = ph.style.gridColumnStart;
                 if (gridCol && parseInt(gridCol, 10) === menuData.col) {
-                    const rMenu = ph.getBoundingClientRect();
-                    result = { l: rMenu.left, t: rMenu.top };
+                    result = ph;
                 }
             }
         });
@@ -398,14 +336,39 @@ class ContextMenu {
         }
     }
 
-    static positionAtRow(menu, row) {
-        const rowRect = row.getBoundingClientRect();
-        const lastRow = menu._row;
-        menu.style.top = `${rowRect.top}px`;
-        menu._row = row;
-        if (lastRow) {
-            lastRow.classList.remove(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
+    static appendMenuButton(ph, menuData) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'dds-menu-anchor-button';
+        button.innerText = '☰';
+
+        button._menu = menuData;
+
+        button.addEventListener('click', (e) => {
+        });
+
+        ph.appendChild(button);
+    }
+
+    static moveToSflRow(row, lastPh) {
+        const lastRow = lastPh.parentElement;
+        if (!lastRow || lastRow === row) { return; }
+
+        lastRow.classList.remove(EXPO_SUBFILE_CLASS.CANDIDATE_CURRENT_RECORD);
+
+        const lastButton = lastPh.querySelector('button.dds-menu-anchor-button');
+        if (!lastButton || ! lastButton._menu) { return; }
+
+        const menu = lastButton._menu;
+        const ph = ContextMenu.findPlaceholder(row, menu);
+
+        if (!ph) {
+            return;
         }
+
+        lastPh.removeChild(lastButton);
+        ContextMenu.appendMenuButton(ph, menu);
+        menu._ph = ph;
     }
 }
 

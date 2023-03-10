@@ -289,19 +289,18 @@ class Page {
     }
 
     handleWindowResizeEvent() {
-        const form = this.getForm();
-        const main = form.querySelector(MAIN_SELECTOR);
-        if (main) {
-            DdsWindow.setVarBackgroundPosition();
-        }
+        DdsWindow.setVarBackgroundPosition();
+        ContextMenu.repositionMenus();
     }
 
     handleMainPanelScrollEvent(event) {
         DdsWindow.setVarBackgroundPosition();
+        ContextMenu.repositionMenus();
     }
 
     handleDocScrollEvent(event) {
         DdsWindow.setVarBackgroundPosition();
+        ContextMenu.repositionMenus();
     }
 
     handleAjaxGetRecordsResponseEvent(res) {
