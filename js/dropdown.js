@@ -218,11 +218,6 @@ class ContextMenu {
             const recordName = Object.keys(this.menusByRecord)[i];
             const recordMenus = this.menusByRecord[recordName];
             recordMenus.forEach((menu) => {
-                //const menuEl = this.createMenu(main, recordName, menu);
-                //if (menuEl) {
-                //    this.list.push(menuEl);
-                //}
-
                 ContextMenu.preparePlaceHolder(main, recordName, menu);
             });
         }
@@ -242,12 +237,13 @@ class ContextMenu {
 
         ContextMenu.appendMenuButton(ph, menuData);
         menuData._ph = ph;
+        // menuData._main = main;
 
         if (isSubfile) {
             const rows = SubfileController.selectAllRowsIncludeTR(sflRecordsContainer);
             rows.forEach((row) => {
                 row.addEventListener('mouseover', () => {
-                    ContextMenu.moveToSflRow(row, menuData._ph /*ph*/);
+                    ContextMenu.moveToSflRow(row, menuData._ph);
                 });
             });
         }
@@ -256,18 +252,6 @@ class ContextMenu {
         //    recordEl.addEventListener('click', () => ContextMenu.collapse(menu));
         }
     }
-
-    repositionMenus() { // Delete me !!!
-        //this.list.forEach((menu) => {
-        //    const ph = menu._ph;
-        //    if (ph && menu.style) {
-        //        const rect = ph.getBoundingClientRect();
-        //        menu.style.left = `${rect.left + window.scrollX}px`;
-        //        menu.style.top = `${rect.top + window.scrollY}px`;
-        //    }
-        //});
-    }
-
 
     static toggleVisibility(nav) {
         if (!nav) { return; }
@@ -345,9 +329,76 @@ class ContextMenu {
         button._menu = menuData;
 
         button.addEventListener('click', (e) => {
+            if (button._menu && button._menu._ph) {
+                const menuData = button._menu;
+                const ph = menuData._ph;
+                const row = ph.parentElement;
+                if (row) {
+                    button._row = row;
+                    const recordsContainer = row.closest('div[data-asna-row]');
+                    if (recordsContainer) {
+                        SubfileController.setCurrentSelection(recordsContainer, row, true);
+                    }
+                }
+
+                const menuPopup = button.querySelector('div.dds-menu-popup');
+                if (!menuPopup) {
+                    const rect = ph.getBoundingClientRect();
+                    ContextMenu.createPopup(button, rect.left + window.scrollX, rect.top + window.scrollY, menuData);
+                }
+            }
         });
 
         ph.appendChild(button);
+    }
+
+    static createPopup(button,left, top, menuData) {
+        const div = document.createElement('div');
+        div.classList.add('dds-menu-popup');
+        div.style.left = `${left}px`;
+        div.style.top = `${top}px`;
+
+        const nav = document.createElement('nav');
+        const ul = document.createElement('ul');
+
+        nav.className = 'dds-menu';
+
+        div.appendChild(nav);
+
+        nav.appendChild(ul);
+
+        menuData.options.forEach((menuOption) => {
+            const item = document.createElement('li');
+            if (menuOption.text === "--" && menuOption.aidKeyName === "None") {
+                item.className = 'dds-menu-divider';
+                const hRule = document.createElement('hr');
+                item.appendChild(hRule);
+            }
+            else {
+                const menuButton = document.createElement('button');
+                menuButton.type = 'button';
+                item.appendChild(menuButton);
+
+                menuButton.innerText = menuOption.text;
+                menuButton._menuOption = menuOption
+                menuButton.addEventListener('click', (e) => {
+                    const me = e.target;
+                    const nav = me.closest(MENU_NAV_SELECTOR);
+                    if (nav) { nav.style.display = 'none'; }
+                    const row = button._row;
+                    let ancestorEl = row;
+
+                    // if (!ancestorEl) { ancestorEl = nav.parentElement._record; }
+
+                    if (ancestorEl) {
+                        ContextMenu.doActionDescendant(ancestorEl, menuOption);
+                    }
+                });
+            }
+            ul.appendChild(item);
+        });
+
+        button.appendChild(div);
     }
 
     static moveToSflRow(row, lastPh) {

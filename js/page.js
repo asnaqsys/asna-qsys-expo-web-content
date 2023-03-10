@@ -290,17 +290,14 @@ class Page {
 
     handleWindowResizeEvent() {
         DdsWindow.setVarBackgroundPosition();
-        ContextMenu.repositionMenus();
     }
 
     handleMainPanelScrollEvent(event) {
         DdsWindow.setVarBackgroundPosition();
-        ContextMenu.repositionMenus();
     }
 
     handleDocScrollEvent(event) {
         DdsWindow.setVarBackgroundPosition();
-        ContextMenu.repositionMenus();
     }
 
     handleAjaxGetRecordsResponseEvent(res) {

@@ -494,7 +494,8 @@ body {
 
 \*-------------------------------------------*/
 
-.dds-menu-anchor {
+.dds-menu-popup {
+    position: absolute;
     display: block;
     text-align: center;
     padding: 0;
@@ -509,7 +510,6 @@ body {
 }
 
 .dds-menu {
-    display: none;
     background: white;
     border-radius: 0.5em;
     border: 1px solid #dedede;
