@@ -7,6 +7,7 @@
 
 export { theDropDown as DropDown };
 export { theContextMenu as ContextMenu };
+export { theDecRange as DecRange };
 
 import { AsnaDataAttrName } from './asna-data-attr.js';
 import { StringExt } from './string.js';
@@ -305,7 +306,6 @@ class ContextMenu {
         return result;
     }
 
-
     static appendMenuButton(ph, menuData) {
         const button = document.createElement('button');
         button.type = 'button';
@@ -461,5 +461,72 @@ class ContextMenu {
     }
 }
 
+class DecRange {
+    init(form) {
+        const elements = form.querySelectorAll(`input[${AsnaDataAttrName.DEC_RANGE_OPTIONS}]`);
+
+        for (let i = 0, l = elements.length; i < l; i++) {
+            const input = elements[i];
+            const encOptions = input.getAttribute(AsnaDataAttrName.DEC_RANGE_OPTIONS);
+            try {
+                const options = JSON.parse(Base64.decode(encOptions));
+                input.removeAttribute(AsnaDataAttrName.DEC_RANGE_OPTIONS);
+                DecRange.createComponent(input, options);
+            }
+            catch (ex) {
+                // alert(ex);
+            }
+        }
+    }
+
+    static createComponent(input, options) {
+        if (options.type === 'b') {
+            DecRange.createButtons(input, options);
+        }
+    }
+
+    static createButtons(input, options) {
+        const div = document.createElement('div');
+        DecRange.copyNonInputAttributes(div, input);
+
+        const btnMinus = document.createElement('button');
+        btnMinus.innerText = '-';
+        // _initBtn(btnMinus);
+
+        const inputDecField = document.createElement('input');
+        if (options.name) {
+            inputDecField.setAttribute('name', options.name);
+        }
+
+        if (options.numericValue) {
+            inputDecField.setAttribute('value', options.numericValue);
+        }
+
+        const btnPlus = document.createElement('button');
+        btnPlus.innerText = '+';
+        // _initBtn(btnPlus);
+
+        div.appendChild(btnMinus);
+        div.appendChild(inputDecField);
+        div.appendChild(btnPlus);
+
+        input.parentNode.replaceChild(div, input); // Note: input will be destroyed during DOM's garbage collection.
+    }
+
+    static copyNonInputAttributes(target, source) {
+        if (!source.attributes) { return; }
+
+        for (let i = 0, l = source.attributes.length; i < l; i++) {
+            const attr = source.attributes[i];
+            if (attr === 'name' || attr === 'value') {
+                continue;
+            }
+
+            target.setAttribute(attr.name, attr.value);
+        }
+    }
+}
+
 const theDropDown = new DropDown();
 const theContextMenu = new ContextMenu();
+const theDecRange = new DecRange();
