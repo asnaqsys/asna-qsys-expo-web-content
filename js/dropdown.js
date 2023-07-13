@@ -488,23 +488,34 @@ class DecRange {
     static createButtons(input, options) {
         const div = document.createElement('div');
         DecRange.copyNonInputAttributes(div, input);
+        div.className = 'dds-dec-range-container';
 
         const btnMinus = document.createElement('button');
         btnMinus.innerText = '-';
-        // _initBtn(btnMinus);
+        DecRange.initBtn(btnMinus, options.readOnly);
 
         const inputDecField = document.createElement('input');
+        inputDecField.type = 'text';
+        inputDecField.className = 'dds-dec-range-button-input';
         if (options.name) {
             inputDecField.setAttribute('name', options.name);
         }
 
         if (options.numericValue) {
-            inputDecField.setAttribute('value', options.numericValue);
+            inputDecField.value = options.numericValue;
         }
 
         const btnPlus = document.createElement('button');
         btnPlus.innerText = '+';
-        // _initBtn(btnPlus);
+        DecRange.initBtn(btnPlus, options.readOnly);
+
+        if (!options.readOnly) {
+            btnMinus._asna = { input: inputDecField, dir: -1, step: options.step };
+            btnPlus._asna = { input: inputDecField, dir: +1, step: options.step };
+
+            btnMinus.addEventListener('click', DecRange.handleChangeInputButtonClick);
+            btnPlus.addEventListener('click', DecRange.handleChangeInputButtonClick);
+        }
 
         div.appendChild(btnMinus);
         div.appendChild(inputDecField);
@@ -518,12 +529,53 @@ class DecRange {
 
         for (let i = 0, l = source.attributes.length; i < l; i++) {
             const attr = source.attributes[i];
-            if (attr === 'name' || attr === 'value') {
+            if (attr.name && (attr.name === 'name' || attr.name === 'value') ) {
                 continue;
             }
 
             target.setAttribute(attr.name, attr.value);
         }
+    }
+
+    static initBtn(btn, readOnly) {
+        btn.className = 'dds-dec-range-button';
+        btn.type = 'button';
+
+        if (readOnly) {
+            btn.setAttribute('disabled', true);
+        }
+    }
+
+    static handleChangeInputButtonClick(e) {
+        let btn = e.target, err;
+
+        if (!btn || !btn._asna || !btn._asna.input) { return };
+
+        let  input = btn._asna.input;
+        let  dir = btn._asna.dir ? btn._asna.dir : 1;
+        const step = btn._asna.step;
+
+        if (!step || !input) { return; }
+
+        try {
+            const min = input.getAttribute('min');
+            const max = input.getAttribute('max');
+            const amount = parseFloat(step);
+
+            let current = parseFloat(input.value);
+            let newVal = current + (dir > 0 ? step : -step);
+
+            if (min) {
+                newVal = Math.max(newVal, parseFloat(min));
+            }
+
+            if (max) {
+                newVal = Math.min(newVal, parseFloat(max));
+            }
+
+            input.value = newVal;
+        }
+        catch (err) { }
     }
 }
 
