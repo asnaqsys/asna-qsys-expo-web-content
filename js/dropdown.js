@@ -483,6 +483,9 @@ class DecRange {
         if (options.type === 'b') {
             DecRange.createButtons(input, options);
         }
+        else if (options.type === 's') {
+            DecRange.createSlider(input, options);
+        }
     }
 
     static createButtons(input, options) {
@@ -505,11 +508,20 @@ class DecRange {
             inputDecField.value = options.numericValue;
         }
 
+
         const btnPlus = document.createElement('button');
         btnPlus.innerText = '+';
         DecRange.initBtn(btnPlus, options.readOnly);
 
-        if (!options.readOnly) {
+        if (options.readOnly) {
+            inputDecField.setAttribute('disabled', true);
+        }
+        else {
+            if (options.max > options.min) {
+                inputDecField.setAttribute("min", options.min);
+                inputDecField.setAttribute("max", options.max);
+            }
+
             btnMinus._asna = { input: inputDecField, dir: -1, step: options.step };
             btnPlus._asna = { input: inputDecField, dir: +1, step: options.step };
 
@@ -520,6 +532,77 @@ class DecRange {
         div.appendChild(btnMinus);
         div.appendChild(inputDecField);
         div.appendChild(btnPlus);
+
+        input.parentNode.replaceChild(div, input); // Note: input will be destroyed during DOM's garbage collection.
+    }
+
+    static createSlider(input, options) {
+        const div = document.createElement('div');
+        DecRange.copyNonInputAttributes(div, input);
+        div.className = 'dds-dec-range-container';
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.className = 'dds-dec-range-slider';
+
+        if (options.readOnly) {
+            slider.setAttribute('disabled', true);
+        }
+
+        if (options.numericValue) {
+            slider.value = options.numericValue;
+        }
+
+        if (options.max > options.min) {
+            slider.setAttribute("min", options.min);
+            slider.setAttribute("max", options.max);
+        }
+
+        if (options.showValue && options.showValue === 'l' || options.showValue === 'r') {
+            const inputDecField = document.createElement('input');
+            inputDecField.type = 'text';
+            inputDecField.className = 'dds-dec-range-slider-input';
+
+            if (options.name) {
+                inputDecField.setAttribute('name', options.name);
+            }
+
+            if (options.numericValue) {
+                inputDecField.value = options.numericValue;
+            }
+
+            if (options.readOnly) {
+                inputDecField.setAttribute('disabled', true);
+            }
+            else {
+                if (options.max > options.min) {
+                    inputDecField.setAttribute("min", options.min);
+                    inputDecField.setAttribute("max", options.max);
+                }
+
+                inputDecField._asna = { slider: slider };
+                inputDecField.addEventListener('input', DecRange.handleSliderStyleValueChange);
+                inputDecField.addEventListener('change', DecRange.handleSliderStyleValueChange);
+
+                slider._asna = { input: inputDecField };
+                slider.addEventListener('change', DecRange.handleSliderStylePositionChange);
+            }
+
+            if (options.showValue === 'l') {
+                div.appendChild(inputDecField);
+                div.appendChild(slider);
+            }
+            else {
+                div.appendChild(slider);
+                div.appendChild(inputDecField);
+            }
+        }
+        else {
+            if (options.name) {
+                slider.setAttribute('name', options.name);
+            }
+            div.appendChild(slider);
+        }
 
         input.parentNode.replaceChild(div, input); // Note: input will be destroyed during DOM's garbage collection.
     }
@@ -576,6 +659,24 @@ class DecRange {
             input.value = newVal;
         }
         catch (err) { }
+    }
+
+    static handleSliderStyleValueChange(e) {
+        const input = e.target;
+
+        if (!input || !input._asna || !input._asna.slider) { return; }
+
+        const slider = input._asna.slider;
+        slider.value = input.value;
+    }
+
+    static handleSliderStylePositionChange(e) {
+        const slider = e.target;
+
+        if (!slider || !slider._asna || !slider._asna.input) { return; }
+
+        const inputDecField = slider._asna.input;
+        inputDecField.value = slider.value;
     }
 }
 

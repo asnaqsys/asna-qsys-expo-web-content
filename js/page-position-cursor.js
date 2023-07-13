@@ -289,7 +289,7 @@ class PositionCursor {
             range.moveStart('character', toPos);
             range.select();
         }
-        else if (input.setSelectionRange) { // Chrome, Firefox
+        else if (input.setSelectionRange && input.type !== 'range') { // Chrome, Firefox
             input.setSelectionRange(fromPos,toPos);
         }
     }
