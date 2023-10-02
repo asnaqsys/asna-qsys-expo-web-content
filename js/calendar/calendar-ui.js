@@ -69,6 +69,9 @@ const ICON_NEXT_YEAR_SVG = `
 </span>`;
 const ICON_NEXT_YEAR = 'icon-next-year';
 
+const OPACITY_ENABLED = 1;
+const OPACITY_DISABLED = 0.5;
+
 class CalendarUI {
     constructor() {
         // Other fields are created dynamically by function show ...
@@ -334,9 +337,10 @@ class CalendarUI {
             return;
         }
 
+        this.enableAllMoveIcons();
         this.calMap = this.emptyCalMap();
 
-        const numDays = IbmDate.numOfDaysInMonth(this.monthDisplayed, this.yearDisplayed);
+        // const numDays = IbmDate.numOfDaysInMonth(this.monthDisplayed, this.yearDisplayed);
         const tempDate = IbmDate.createDate(1, this.monthDisplayed, this.yearDisplayed);
 
         let firstDay = tempDate.getDay() - this.firstWeekDay;
@@ -397,6 +401,8 @@ class CalendarUI {
                 }
             }
         }
+
+        this.disableInvalidMovesIcons();
     }
 
     showUI(rect) {
@@ -410,6 +416,41 @@ class CalendarUI {
             this.calendarContainerElement.focus();
         }
     }
+
+    enableAllMoveIcons() {
+        this.navIconEl[ICON_PREV_YEAR].style.opacity = OPACITY_ENABLED;
+        CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_YEAR], true);
+
+        this.navIconEl[ICON_PREV_MONTH].style.opacity = OPACITY_ENABLED;
+        CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_MONTH], true);
+
+        this.navIconEl[ICON_NEXT_MONTH].style.opacity = OPACITY_ENABLED;
+        CalendarUI.setEnabledState(this.navIconEl[ICON_NEXT_MONTH], true);
+
+        this.navIconEl[ICON_NEXT_YEAR].style.opacity = OPACITY_ENABLED;
+        CalendarUI.setEnabledState(this.navIconEl[ICON_NEXT_YEAR], true);
+    }
+
+    disableInvalidMovesIcons() {
+        //this.navIconEl[ICON_PREV_YEAR].style.opacity = OPACITY_DISABLED;
+        //CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_YEAR], false);
+
+        //this.navIconEl[ICON_PREV_MONTH].style.opacity = OPACITY_DISABLED;
+        //CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_MONTH], false);
+
+        //this.navIconEl[ICON_NEXT_MONTH].style.opacity = OPACITY_DISABLED;
+        //CalendarUI.setEnabledState(this.navIconEl[ICON_NEXT_MONTH], false);
+
+        //this.navIconEl[ICON_NEXT_YEAR].style.opacity = OPACITY_DISABLED;
+        //CalendarUI.setEnabledState(this.navIconEl[ICON_NEXT_YEAR], false);
+    }
+
+    static setEnabledState(el, enabled) {
+        el._enabled = enabled;
+    }
+    static getEnabledState(el) {
+        return el._enabled;
+    } 
 
     handleCalendarBlurEvent(event) { // Lost Focus
         if (event.target && !this.calendarContainerElement.contains(event.target)) {
@@ -435,22 +476,30 @@ class CalendarUI {
     }
 
     handlePrevMonthMouseDownEvent(event) {
+        if (!CalendarUI.getEnabledState(this.navIconEl[ICON_PREV_MONTH]))
+            return;
         this.moveMonths(-1);
         this.updateCalendar();
     }
 
     handleNextMonthMouseDownEvent(event) {
+        if (!CalendarUI.getEnabledState(this.navIconEl[ICON_NEXT_MONTH]))
+            return;
         this.moveMonths(1);
         this.updateCalendar();
     }
 
     handlePrevYearMouseDownEvent(event) {
+        if (!CalendarUI.getEnabledState(this.navIconEl[ICON_PREV_YEAR]))
+            return;
         if (this.moveYears(-1)) {
             this.updateCalendar();
         }
     }
 
     handleNextYearMouseDownEvent(event) {
+        if (!CalendarUI.getEnabledState(this.navIconEl[ICON_NEXT_YEAR]))
+            return;
         if (this.moveYears(1)) {
             this.updateCalendar();
         }
