@@ -432,17 +432,14 @@ class CalendarUI {
     }
 
     disableInvalidMovesIcons() {
-        //this.navIconEl[ICON_PREV_YEAR].style.opacity = OPACITY_DISABLED;
-        //CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_YEAR], false);
-
-        //this.navIconEl[ICON_PREV_MONTH].style.opacity = OPACITY_DISABLED;
-        //CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_MONTH], false);
-
-        //this.navIconEl[ICON_NEXT_MONTH].style.opacity = OPACITY_DISABLED;
-        //CalendarUI.setEnabledState(this.navIconEl[ICON_NEXT_MONTH], false);
-
-        //this.navIconEl[ICON_NEXT_YEAR].style.opacity = OPACITY_DISABLED;
-        //CalendarUI.setEnabledState(this.navIconEl[ICON_NEXT_YEAR], false);
+        if (!this.testMoveMonths(-1)) {
+            this.navIconEl[ICON_PREV_MONTH].style.opacity = OPACITY_DISABLED;
+            CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_MONTH], false);
+        }
+        if (!this.testMoveYears(-1)) {
+            this.navIconEl[ICON_PREV_YEAR].style.opacity = OPACITY_DISABLED;
+            CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_YEAR], false);
+        }
     }
 
     static setEnabledState(el, enabled) {
@@ -492,9 +489,8 @@ class CalendarUI {
     handlePrevYearMouseDownEvent(event) {
         if (!CalendarUI.getEnabledState(this.navIconEl[ICON_PREV_YEAR]))
             return;
-        if (this.moveYears(-1)) {
-            this.updateCalendar();
-        }
+        this.moveYears(-1);
+        this.updateCalendar();
     }
 
     handleNextYearMouseDownEvent(event) {
@@ -594,7 +590,7 @@ class CalendarUI {
         if (isNaN(relativeMonthsAmount)) {
             return;
         }
-        let nextMonthNumber = this.monthDisplayed + relativeMonthsAmount;
+        const nextMonthNumber = this.monthDisplayed + relativeMonthsAmount;
 
         if (this.moveYears((nextMonthNumber < 0 ? -1 : 0) + nextMonthNumber / MONTHS_IN_YEAR)) {
             this.monthDisplayed = nextMonthNumber % MONTHS_IN_YEAR;
@@ -604,18 +600,35 @@ class CalendarUI {
         }
     }
 
-    moveYears(relativeYearsAmount) {
-        if (isNaN(relativeYearsAmount)) {
+    testMoveMonths(relativeMonthsAmount) {
+        if (isNaN(relativeMonthsAmount)) {
             return false;
         }
-
-        if (relativeYearsAmount === 0) {
-            return true;
+        const nextMonthNumber = this.monthDisplayed + relativeMonthsAmount;
+        if (!this.testMoveYears((nextMonthNumber < 0 ? -1 : 0) + nextMonthNumber / MONTHS_IN_YEAR)) {
+            return false;
         }
-
-        let requestedYear = this.yearDisplayed + (relativeYearsAmount > 0 ? Math.floor(relativeYearsAmount) : Math.ceil(relativeYearsAmount));
-        this.yearDisplayed = requestedYear;
         return true;
+    }
+
+    moveYears(relativeYearsAmount) {
+        if (isNaN(relativeYearsAmount)) { return false; }
+        if (relativeYearsAmount === 0) { return true; }
+
+        this.yearDisplayed = this.calcYear(relativeYearsAmount);
+        return true;
+    }
+
+    testMoveYears(relativeYearsAmount) {
+        if (isNaN(relativeYearsAmount)) { return false; }
+        if (relativeYearsAmount === 0) { return true; }
+
+        const requestedYear = this.calcYear(relativeYearsAmount);
+        return requestedYear >= 1;
+    }
+
+    calcYear(relYearsAmt) {
+        return this.yearDisplayed + (relYearsAmt > 0 ? Math.floor(relYearsAmt) : Math.ceil(relYearsAmt));
     }
 
     emptyCalMap() {
