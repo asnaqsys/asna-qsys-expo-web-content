@@ -432,11 +432,13 @@ class CalendarUI {
     }
 
     disableInvalidMovesIcons() {
-        if (!this.testMoveMonths(-1)) {
+        const minDate = CalendarUI.newDateNoTime(this.input.getAttribute('min'));
+
+        if (!this.testMoveMonths(-1, minDate)) {
             this.navIconEl[ICON_PREV_MONTH].style.opacity = OPACITY_DISABLED;
             CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_MONTH], false);
         }
-        if (!this.testMoveYears(-1)) {
+        if (!this.testMoveYears(-1, minDate)) {
             this.navIconEl[ICON_PREV_YEAR].style.opacity = OPACITY_DISABLED;
             CalendarUI.setEnabledState(this.navIconEl[ICON_PREV_YEAR], false);
         }
@@ -448,6 +450,11 @@ class CalendarUI {
     static getEnabledState(el) {
         return el._enabled;
     } 
+
+    static newDateNoTime(isoDate) {
+        if (!isoDate) { return null; }
+        return new Date(isoDate +'T00:00:00');
+    }
 
     handleCalendarBlurEvent(event) { // Lost Focus
         if (event.target && !this.calendarContainerElement.contains(event.target)) {
@@ -600,13 +607,37 @@ class CalendarUI {
         }
     }
 
-    testMoveMonths(relativeMonthsAmount) {
-        if (isNaN(relativeMonthsAmount)) {
+    testMoveMonths(relativeMonthsAmt, minDate) {
+        if (isNaN(relativeMonthsAmt)) {
             return false;
         }
-        const nextMonthNumber = this.monthDisplayed + relativeMonthsAmount;
-        if (!this.testMoveYears((nextMonthNumber < 0 ? -1 : 0) + nextMonthNumber / MONTHS_IN_YEAR)) {
+        const targetMonthNumber = this.monthDisplayed + relativeMonthsAmt;
+        const relativeYearsAmt = (targetMonthNumber < 0 ? -1 : 0) + targetMonthNumber / MONTHS_IN_YEAR; 
+        if (!this.testMoveYears(relativeYearsAmt)){
             return false;
+        }
+        if (minDate) {
+            const minDateNoDay = new Date(minDate.getFullYear(), minDate.getMonth());
+            console.log(`Min (no day): ${minDateNoDay.toLocaleDateString('en-US')}`)
+            let targetMonth = targetMonthNumber % MONTHS_IN_YEAR;
+            if (targetMonth < 0)
+                targetMonth += MONTHS_IN_YEAR;
+            const targetYear = this.calcYear(relativeYearsAmt);
+            const targetDate = new Date(targetYear, targetMonth); // No day ...
+
+            console.log(`targetDate: ${targetDate.toLocaleDateString('en-US') }`)
+
+            if (targetDate < minDateNoDay) {
+                console.log('targetDate < minDateNoDay!');
+                console.log('');
+                console.log('');
+                return false;
+            }
+            else {
+                console.log('targetDate >= minDateNoDay!');
+                console.log('');
+                console.log('');
+            }
         }
         return true;
     }
