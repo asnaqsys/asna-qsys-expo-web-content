@@ -613,30 +613,30 @@ class CalendarUI {
         }
         const targetMonthNumber = this.monthDisplayed + relativeMonthsAmt;
         const relativeYearsAmt = (targetMonthNumber < 0 ? -1 : 0) + targetMonthNumber / MONTHS_IN_YEAR; 
-        if (!this.testMoveYears(relativeYearsAmt)){
+        if (!this.testMoveYears(relativeYearsAmt, minDate)){
             return false;
         }
         if (minDate) {
             const minDateNoDay = new Date(minDate.getFullYear(), minDate.getMonth());
-            console.log(`Min (no day): ${minDateNoDay.toLocaleDateString('en-US')}`)
+            // console.log(`Min (no day): ${minDateNoDay.toLocaleDateString('en-US')}`)
             let targetMonth = targetMonthNumber % MONTHS_IN_YEAR;
             if (targetMonth < 0)
                 targetMonth += MONTHS_IN_YEAR;
             const targetYear = this.calcYear(relativeYearsAmt);
             const targetDate = new Date(targetYear, targetMonth); // No day ...
 
-            console.log(`targetDate: ${targetDate.toLocaleDateString('en-US') }`)
+            // console.log(`targetDate: ${targetDate.toLocaleDateString('en-US') }`)
 
             if (targetDate < minDateNoDay) {
-                console.log('targetDate < minDateNoDay!');
-                console.log('');
-                console.log('');
+                //console.log('targetDate < minDateNoDay!');
+                //console.log('');
+                //console.log('');
                 return false;
             }
             else {
-                console.log('targetDate >= minDateNoDay!');
-                console.log('');
-                console.log('');
+                //console.log('targetDate >= minDateNoDay!');
+                //console.log('');
+                //console.log('');
             }
         }
         return true;
@@ -650,12 +650,21 @@ class CalendarUI {
         return true;
     }
 
-    testMoveYears(relativeYearsAmount) {
+    testMoveYears(relativeYearsAmount, minDate) {
         if (isNaN(relativeYearsAmount)) { return false; }
         if (relativeYearsAmount === 0) { return true; }
 
         const requestedYear = this.calcYear(relativeYearsAmount);
-        return requestedYear >= 1;
+        if (requestedYear < 1) {
+            return false;
+        }
+        if (minDate) {
+            const minDateYear = minDate.getFullYear();
+            if (requestedYear < minDateYear) {
+                return false;
+            }
+        }
+        return true;
     }
 
     calcYear(relYearsAmt) {
