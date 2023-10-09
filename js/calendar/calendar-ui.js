@@ -513,8 +513,8 @@ class CalendarUI {
             return;
         }
 
-        let daySelected = parseInt(event.currentTarget.innerText, 10);
-        let action = this.testDayInWeek(daySelected, weekSelected);
+        const daySelected = parseInt(event.currentTarget.innerText, 10);
+        const action = this.testDayInWeek(daySelected, weekSelected);
 
         switch (action) {
             case 'prev-month':
@@ -526,7 +526,12 @@ class CalendarUI {
                 this.updateCalendar();
                 break;
             case 'select':
-                this.date = IbmDate.createDate(daySelected, this.monthDisplayed, this.yearDisplayed);
+                const targetDate = IbmDate.createDate(daySelected, this.monthDisplayed, this.yearDisplayed);
+                const minDate = CalendarUI.newDateNoTime(this.input.getAttribute('min'));
+                if (minDate && targetDate < minDate) {
+                    break;
+                }
+                this.date = targetDate;
                 this.updateInput();
                 this.hide();
                 break;
@@ -618,25 +623,15 @@ class CalendarUI {
         }
         if (minDate) {
             const minDateNoDay = new Date(minDate.getFullYear(), minDate.getMonth());
-            // console.log(`Min (no day): ${minDateNoDay.toLocaleDateString('en-US')}`)
             let targetMonth = targetMonthNumber % MONTHS_IN_YEAR;
-            if (targetMonth < 0)
+            if (targetMonth < 0) {
                 targetMonth += MONTHS_IN_YEAR;
+            }
             const targetYear = this.calcYear(relativeYearsAmt);
-            const targetDate = new Date(targetYear, targetMonth); // No day ...
-
-            // console.log(`targetDate: ${targetDate.toLocaleDateString('en-US') }`)
+            const targetDate = new Date(targetYear, targetMonth);
 
             if (targetDate < minDateNoDay) {
-                //console.log('targetDate < minDateNoDay!');
-                //console.log('');
-                //console.log('');
                 return false;
-            }
-            else {
-                //console.log('targetDate >= minDateNoDay!');
-                //console.log('');
-                //console.log('');
             }
         }
         return true;
