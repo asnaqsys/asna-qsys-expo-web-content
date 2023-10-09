@@ -529,23 +529,29 @@ class CalendarUI {
 
         const daySelected = parseInt(event.currentTarget.innerText, 10);
         const action = this.testDayInWeek(daySelected, weekSelected);
+        const minDate = CalendarUI.newDateNoTime(this.input.getAttribute('min'));
+        const maxDate = CalendarUI.newDateNoTime(this.input.getAttribute('max'));
 
         switch (action) {
             case 'prev-month':
+                if (!this.testMoveMonths(-1, minDate)) {
+                    break;
+                }
                 this.moveMonths(-1);
                 this.updateCalendar();
                 break;
             case 'next-month':
+                if (!this.testMoveMonths(1, maxDate)) {
+                    break;
+                }
                 this.moveMonths(1);
                 this.updateCalendar();
                 break;
             case 'select':
                 const targetDate = IbmDate.createDate(daySelected, this.monthDisplayed, this.yearDisplayed);
-                const minDate = CalendarUI.newDateNoTime(this.input.getAttribute('min'));
                 if (minDate && targetDate < minDate) {
                     break;
                 }
-                const maxDate = CalendarUI.newDateNoTime(this.input.getAttribute('max'));
                 if (maxDate && targetDate > maxDate) {
                     break;
                 }
