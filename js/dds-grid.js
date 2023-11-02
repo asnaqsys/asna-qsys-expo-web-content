@@ -61,7 +61,7 @@ class DdsGrid {
                 continue;
             }
 
-            const ddsRows = this.findRows(record);
+            const ddsRows = this.findRows(record,true);
 
             if (!ddsRows) {
                 continue;
@@ -88,6 +88,7 @@ class DdsGrid {
 
                         lastRowVal = sflToRow;
                         lastRow = row;
+                        rowSpanCollection.push(row);
                         continue;
                     }
                 }
@@ -276,13 +277,24 @@ class DdsGrid {
         return result;
     }
 
-    findRows(parentRecord) {
+    findRows(parentRecord, onlySiblings) {
         const all = parentRecord.querySelectorAll(`div[${AsnaDataAttrName.ROW}]`);
         if (!all || !all.length) {
             return null;
         }
 
-        return all;
+        if (!onlySiblings) {
+            return all;
+        }
+
+        let siblings = [];
+        all.forEach((div) => {
+            if (div.parentElement === parentRecord) {
+                siblings.push(div);
+            }
+        });
+
+        return siblings;
     }
 
     moveRecordsToPopup(form, winPopup) {
