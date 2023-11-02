@@ -61,7 +61,7 @@ class DdsGrid {
                 continue;
             }
 
-            const ddsRows = this.findRows(record,true);
+            const ddsRows = this.findRows(record);
 
             if (!ddsRows) {
                 continue;
