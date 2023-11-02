@@ -100,8 +100,11 @@ class DdsGrid {
                 if (!range) {
                     continue;
                 }
-                let rowVal = parseInt(range[0], 10);
-                let emptyRowsBefore = rowVal - 1 - lastRowVal;
+                const rowVal = parseInt(range[0], 10);
+                if (lastRowVal && rowVal <= lastRowVal) {
+                    continue; // Ignore: may be a row inside a subfile (outer range has precedence).
+                }
+                const emptyRowsBefore = rowVal - 1 - lastRowVal;
 
                 if (emptyRowsBefore > 0 && this.isValidRowNumber(row, rowVal)) {
                     this.insertEmptyRows(emptyRowsBefore, row, lastRowVal + 1, exclEmptyRowList);
@@ -277,24 +280,13 @@ class DdsGrid {
         return result;
     }
 
-    findRows(parentRecord, onlySiblings) {
+    findRows(parentRecord) {
         const all = parentRecord.querySelectorAll(`div[${AsnaDataAttrName.ROW}]`);
         if (!all || !all.length) {
             return null;
         }
 
-        if (!onlySiblings) {
-            return all;
-        }
-
-        let siblings = [];
-        all.forEach((div) => {
-            if (div.parentElement === parentRecord) {
-                siblings.push(div);
-            }
-        });
-
-        return siblings;
+        return all;
     }
 
     moveRecordsToPopup(form, winPopup) {
