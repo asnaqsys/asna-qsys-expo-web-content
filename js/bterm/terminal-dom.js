@@ -105,7 +105,7 @@ const MAX_COORD_STR = '99,999';
 
 class TerminalDOM {
     constructor() {
-        this.preFontFamily = '';  // !!! Remove -- we have it in a global var now 
+        // this.preFontFamily = '';  // !!! Remove -- we have it in a global var now 
         // this.sample132 = SAMPLE_44 + SAMPLE_44 + SAMPLE_44;
     }
 
@@ -155,16 +155,16 @@ class TerminalDOM {
     }
 
     // TODO: Make obsolete ...
-    static htmlMeasureText(fontHeight, preFontFamily, text) {
+    static htmlMeasureText(fontHeight, fontFamily, text) {
         const measureDiv = document.createElement('div');
-        const isIE_7 = navigator.appVersion.indexOf('MSIE 7.') > 0;
+        // const isIE_7 = navigator.appVersion.indexOf('MSIE 7.') > 0;
 
-        if (!preFontFamily) {
-            console.log(`Assert: htmlMeasureText preFontFamily is ${preFontFamily} !`);
+        if (!fontFamily) {
+            console.log(`Assert: htmlMeasureText fontFamily is ${fontFamily} !`);
         }
 
         measureDiv.type = 'text';
-        measureDiv.style.fontFamily = preFontFamily;
+        measureDiv.style.fontFamily = fontFamily;
         measureDiv.style.fontSize = fontHeight + 'px';
         measureDiv.style.position = 'absolute';
         measureDiv.style.visibility = 'hidden';
@@ -179,7 +179,7 @@ class TerminalDOM {
 
         document.body.appendChild(measureDiv);
 
-        const height = isIE_7 ? fontHeight : measureDiv.clientHeight;
+        const height = /*isIE_7 ? fontHeight : */ measureDiv.clientHeight;
         const width = measureDiv.clientWidth;
 
         document.body.removeChild(measureDiv);
@@ -231,8 +231,8 @@ class TerminalDOM {
         return true; // !is_iPad;
     }
 
-    static getCharWidth(char, termLayout, preFontFamily ) {
-        return TerminalDOM.htmlMeasureText(termLayout._5250.fontSizePix, preFontFamily, char).w;
+    static getCharWidth(char, termLayout, fontFamily ) {
+        return TerminalDOM.htmlMeasureText(termLayout._5250.fontSizePix, fontFamily, char).w;
     }
 
     static alignInputText(input, height, fSize) {
@@ -471,47 +471,9 @@ class TerminalDOM {
         el.setAttribute('spellcheck', false);
     }
 
-    findPreFontFamily() {
-        const el = document.createElement('pre');
-        document.body.appendChild(el);
-        let ff = TerminalDOM.getComputedStyle(el, 'font-family');
-        document.body.removeChild(el);
-
-        this.preFontFamily = this.replaceAll(ff, '"', "'");
-        return this.preFontFamily;
+    isValidMonospace(fontFamily) {
+        return TerminalDOM.htmlMeasureText(10, fontFamily, 'M').w === TerminalDOM.htmlMeasureText(10, fontFamily, 'i').w;
     }
-
-    replaceWithInputText(oldElement) {
-        let id = oldElement.id;
-        let position = oldElement.style.position ? oldElement.style.position : 'absolute';
-        let left = oldElement.style.left;
-        let top = oldElement.style.top;
-        let width = oldElement.style.width;
-        let height = oldElement.style.height;
-        let parent = oldElement.parentElement;
-
-        parent.removeChild(oldElement);
-        let newElement = document.createElement('input');
-        newElement.type = 'text';
-        newElement.id = id;
-        newElement.name = 'cursor';
-        newElement.style.position = position;
-        newElement.style.left = left;
-        newElement.style.top = top;
-        newElement.style.width = width;
-        newElement.style.height = height;
-
-        parent.appendChild(newElement);
-        return newElement;
-    }
-
-    isValidMonospace() {
-        return TerminalDOM.htmlMeasureText(10, 'M').w === TerminalDOM.htmlMeasureText(10, 'i').w;
-    }
-
-    //setPreFontFamily(fontFamily) {
-    //    this.preFontFamily = fontFamily;
-    //}
 
     static setGlobalVar(varname, varvalue) {
         const cssVarRoot = document.documentElement.style;
@@ -627,13 +589,13 @@ class TerminalToolbar {
         this.sBarErrMsgEl = null;
 
         this.toolbarFontSizePix = 0;
-        this.preFontFamily = '';
+        // this.preFontFamily = '';
         this.designTimeStatusbarHtml = '';
     }
 
     create(termLayout, fontFamily, termColors) {
         this.toolbarFontSizePix = TerminalDOM.fontSizeForHeight(termLayout.status.h);
-        this.preFontFamily = fontFamily;
+        // this.preFontFamily = fontFamily;
 
         this.statusBar = document.getElementById(ID.STATUSBAR);
         if (!statusbar) { return; }
@@ -641,13 +603,13 @@ class TerminalToolbar {
         this.designTimeStatusbarHtml = this.statusBar.innerHTML;
 
         const oneChar = 'M';
-        const oneBlank = ' ';
-        const gapToolbarItemsWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, this.preFontFamily, oneChar).w;
+        // const oneBlank = ' ';
+        const gapToolbarItemsWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, fontFamily, oneChar).w;
 
         this.statusBar.style.left = '0px';
         this.statusBar.style.top = termLayout.status.t + 'px';
         this.statusBar.style.height = (termLayout.status.h + 1) + 'px'; // Width is 100% (CSS)
-        this.statusBar.style.fontFamily = this.preFontFamily;
+        this.statusBar.style.fontFamily = fontFamily;
         this.statusBar.style.fontSize = this.toolbarFontSizePix + 'px';
         this.statusBar.style.overflow = 'hidden';
         this.statusBar.style.display = 'block';
@@ -657,28 +619,28 @@ class TerminalToolbar {
         this.statusBar.style.color = termColors.statBarColor;
         this.statusBar.style.backgroundColor = termColors.statBarBkgdColor;
 
-        const insertStrWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, this.preFontFamily, Labels.get('InsertMode')).w;
-        const maxCoordStrWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, this.preFontFamily, MAX_COORD_STR).w;
-        const maxActFKeyStrWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, this.preFontFamily, AidKey.ToString(QSN.ENTER)).w;
-        const maxIndicatorStrWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, this.preFontFamily, Labels.get('KbdLocked')).w;
+        const insertStrWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, fontFamily, Labels.get('InsertMode')).w;
+        const maxCoordStrWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, fontFamily, MAX_COORD_STR).w;
+        const maxActFKeyStrWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, fontFamily, AidKey.ToString(QSN.ENTER)).w;
+        const maxIndicatorStrWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, fontFamily, Labels.get('KbdLocked')).w;
 
         // Status bar window segments (right aligned)
-        this.sBarCursorPosEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.CURSOR_POS, 0, termLayout.w - maxCoordStrWidth, maxCoordStrWidth, termLayout.status.h, true);
+        this.sBarCursorPosEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.CURSOR_POS, 0, termLayout.w - maxCoordStrWidth, maxCoordStrWidth, termLayout.status.h, fontFamily);
         let offsetFromRight = maxCoordStrWidth + gapToolbarItemsWidth;
 
-        this.sBarInsertModeEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.INSERT_MODE, 0, termLayout.w - offsetFromRight - insertStrWidth, insertStrWidth, termLayout.status.h, true);
+        this.sBarInsertModeEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.INSERT_MODE, 0, termLayout.w - offsetFromRight - insertStrWidth, insertStrWidth, termLayout.status.h, fontFamily);
         offsetFromRight += insertStrWidth + gapToolbarItemsWidth;
 
-        this.sBarActFKeyEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.ACT_FKEY, 0, termLayout.w - offsetFromRight - maxActFKeyStrWidth, maxActFKeyStrWidth, termLayout.status.h, true);
+        this.sBarActFKeyEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.ACT_FKEY, 0, termLayout.w - offsetFromRight - maxActFKeyStrWidth, maxActFKeyStrWidth, termLayout.status.h, fontFamily);
         offsetFromRight += maxActFKeyStrWidth + gapToolbarItemsWidth;
 
         const lastRightAlignedPos = termLayout.w - offsetFromRight - maxIndicatorStrWidth;
-        this.sBarIndEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.INDICATORS, 0, lastRightAlignedPos, maxIndicatorStrWidth, termLayout.status.h, true);
+        this.sBarIndEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.INDICATORS, 0, lastRightAlignedPos, maxIndicatorStrWidth, termLayout.status.h, fontFamily);
 
         // Status bar window segments (left aligned)
         const msgIndIconWidth = termLayout.status.h + gapToolbarItemsWidth / 2;
         if (lastRightAlignedPos > msgIndIconWidth) {
-            this.sBarErrMsgEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.ERRMSG, 0, msgIndIconWidth, lastRightAlignedPos - msgIndIconWidth, termLayout.status.h, false);
+            this.sBarErrMsgEl = this.addToolbarChild(this.statusBar, TOOLBAR_ID.ERRMSG, 0, msgIndIconWidth, lastRightAlignedPos - msgIndIconWidth, termLayout.status.h, '');
         }
     }
 
@@ -761,7 +723,7 @@ class TerminalToolbar {
         }
     }
 
-    addToolbarChild(parent, id, top, left, width, height, useMonoFont) {
+    addToolbarChild(parent, id, top, left, width, height, fontFamily) {
         var child = document.createElement('div');
 
         if (typeof left === 'number' || Validate.digitsOnly(left)) {
@@ -797,8 +759,8 @@ class TerminalToolbar {
         child.style.backgroundColor = 'transparent';
         child.style.verticalAlign = 'middle';
 
-        if (useMonoFont) {
-            child.style.fontFamily = this.preFontFamily;
+        if (fontFamily) {
+            child.style.fontFamily = fontFamily;
         }
 
         TerminalDOM.makeUnselectable(child);
@@ -833,6 +795,7 @@ class MeasureCache {
         }
         const hash = MeasureCache.hash(fontHeight, fontFamily, text);
         this.cache[hash] = measure;
+        this.cache.length++;
     }
     find(fontHeight, fontFamily, text) {
         const hash = MeasureCache.hash(fontHeight, fontFamily, text);

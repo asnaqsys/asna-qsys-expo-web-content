@@ -338,8 +338,8 @@ class Terminal {
 
         this.DOM = new TerminalDOM();
         // this.DOM.findPreFontFamily();
-        if (!this.DOM.isValidMonospace())
-            this.DOM.setGlobalVar('--term-font-family', 'Consolas, monospace;');
+        if (!this.DOM.isValidMonospace(TerminalDOM.getGlobalVarValue('--term-font-family')))
+            TerminalDOM.setGlobalVar('--term-font-family', 'Consolas, monospace;');
 
         this.lookupTopElements();   // Firefox needs this explicit lookup.
 
@@ -367,17 +367,17 @@ class Terminal {
         this.saveInzFieldValues();
         this.saveManFillFieldValues();
         this.newPageCursorInit();
-        // this.DOM.setTerminalFont(this.termLayout._5250);
 
-        this.DBCS = new DBCS(this.termLayout, this.DOM.preFontFamily);
+        const fontFamily = TerminalDOM.getGlobalVarValue('--term-font-family');
+        this.DBCS = new DBCS(this.termLayout, fontFamily);
 
         this.toolbar = new TerminalToolbar();
-        this.toolbar.create(this.termLayout, this.DOM.preFontFamily, this.settingsStore.state.colors);
+        this.toolbar.create(this.termLayout, fontFamily, this.settingsStore.state.colors);
         if (false /*ASNA.Vendor.IsMobile() || ASNA.Vendor.IsWin8Touch()*/) {
             // ASNA.TouchableInput.Create(AsnaTerm5250, formatTable, fieldCount, termLayout, calcTextVertPadding(), CHAR_MEASURE.UNDERSCORE_CHAR_HEIGHT);
         }
 
-        new TerminalRender(this.termLayout, this.settingsStore.state.colors, this.DOM.preFontFamily, this.regScr, this.dataSet, this.AsnaTerm5250).render();
+        new TerminalRender(this.termLayout, this.settingsStore.state.colors, fontFamily, this.regScr, this.dataSet, this.AsnaTerm5250).render();
         if (Keyboard.state === KEYBOARD_STATE.ERROR) {
             this.overlapErrorLine();
         }
@@ -1645,7 +1645,7 @@ class Terminal {
         new TerminalRender(
             this.termLayout,
             this.settingsStore.state.colors,
-            this.DOM.preFontFamily,
+            TerminalDOM.getGlobalVarValue('--term-font-family'),
             this.regScr,
             this.dataSet,
             this.AsnaTerm5250).render();
@@ -1655,7 +1655,7 @@ class Terminal {
         new TerminalRender(
             this.termLayout,
             this.settingsStore.state.colors,
-            this.DOM.preFontFamily,
+            TerminalDOM.getGlobalVarValue('--term-font-family'),
             this.regScr,
             this.dataSet,
             this.AsnaTerm5250).renderInputArea(fromPos, toPos);
@@ -1802,7 +1802,7 @@ class Terminal {
     }
 
     updateChromeColors(colors) {
-        const termRender = new TerminalRender(this.termLayout, colors, this.DOM.preFontFamily, this.regScr, this.dataSet, this.AsnaTerm5250);
+        const termRender = new TerminalRender(this.termLayout, colors, TerminalDOM.getGlobalVarValue('--term-font-family'), this.regScr, this.dataSet, this.AsnaTerm5250);
         this.AsnaTermFacade.style.backgroundColor = termRender.getWebColor('bkgd');
         this.AsnaTermFacade.style.backgroundColor = termRender.getWebColor('bkgd');
         // this.termCursor.style.backgroundColor = colors.cursor;
@@ -1976,12 +1976,7 @@ class Terminal {
         const rect = this.getRect(this.cursor.row, this.cursor.col, 1, 1);
         const nonChar = bkgChar === '\0' || sa && sa.screenAttr && sa.screenAttr.nonDisp;
 
-        //this.termCursor.style.fontFamily = this.DOM.preFontFamily;
-        //this.termCursor.style.fontSize = this.termLayout._5250.fontSizePix + 'px';
         //this.termCursor.style.backgroundColor = this.settingsStore.state.colors.cursor;
-
-        //this.termCursor.style.position = 'absolute';
-
 
         this.termCursor.style.top = rect.t + 'px';
         this.termCursor.style.left = rect.l + 'px';
@@ -1989,7 +1984,7 @@ class Terminal {
         this.termCursor.style.width = rect.w + 'px';
 
         //if (!nonChar) {
-        //    this.termCursor.style.width = TerminalDOM.getCharWidth(bkgChar, this.termLayout, this.DOM.preFontFamily) + 'px'; // Possibly DBCS
+        //    this.termCursor.style.width = TerminalDOM.getCharWidth(bkgChar, this.termLayout, TerminalDOM.getGlobalVarValue('--term-font-family')) + 'px'; // Possibly DBCS
         //}
 
         const subSectMetr = this.getSubSectionMetrics(this.cursor.row, pos - 1);
@@ -2000,7 +1995,7 @@ class Terminal {
         //    const lm = this.getRect(this.cursor.row, 0, 1, 1);
         //    const colOffset = map.colFromPos(subSectMetr.pos);
         //    const offsetX = colOffset * rect.w;
-        //    const substrW = TerminalDOM.htmlMeasureText(this.termLayout._5250.fontSizePix, this.DOM.preFontFamily, subSectMetr.t).w;
+        //    const substrW = TerminalDOM.htmlMeasureText(this.termLayout._5250.fontSizePix,TerminalDOM.getGlobalVarValue('--term-font-family'), subSectMetr.t).w;
 
         //    this.termCursor.style.left = (lm.l + offsetX + substrW) + 'px';
         //}
@@ -2017,16 +2012,11 @@ class Terminal {
             bkgChar = ' ';
         }
 
-        if (true /*ASNA.Vendor.IsDesktop()*/) { // Don't do it for Mobile even if || ...Preference().phyKbd
-            this.termCursor.value = bkgChar;
-            if (this.termCursor.style.display !== 'none') {
-                this.termCursor.focus();
-            }
-            TerminalDOM.moveCaretPos(this.termCursor, 0);
+        this.termCursor.value = bkgChar;
+        if (this.termCursor.style.display !== 'none') {
+            this.termCursor.focus();
         }
-        else {
-            TerminalRender.setDivText(this.termCursor, bkgChar, this.DOM.preFontFamily);
-        }
+        TerminalDOM.moveCaretPos(this.termCursor, 0);
 
         if (dirtyInputFld && sa && sa.usage !== 'o' && sa.field) {
             sa.field.ffw.mdt = true;
@@ -2338,7 +2328,7 @@ class Terminal {
                 new TerminalRender(
                     this.termLayout,
                     this.settingsStore.state.colors,
-                    this.DOM.preFontFamily,
+                    TerminalDOM.getGlobalVarValue('--term-font-family'),
                     this.regScr,
                     this.dataSet,
                     this.AsnaTerm5250).renderFieldFromCursorPos(this.cursor.row, this.cursor.col);
@@ -2439,7 +2429,7 @@ class Terminal {
             new TerminalRender(
                 this.termLayout,
                 this.settingsStore.state.colors,
-                this.DOM.preFontFamily,
+                TerminalDOM.getGlobalVarValue('--term-font-family'),
                 this.regScr,
                 this.dataSet,
                 this.AsnaTerm5250).renderInputCanvasSections(this.AsnaTerm5250, pos, pos + 1);
@@ -2521,7 +2511,7 @@ class Terminal {
         new TerminalRender(
             this.termLayout,
             this.settingsStore.state.colors,
-            this.DOM.preFontFamily,
+            TerminalDOM.getGlobalVarValue('--term-font-family'),
             this.regScr,
             this.dataSet,
             this.AsnaTerm5250).renderInputCanvasSections(this.AsnaTerm5250, pos, pos + 1);
@@ -2574,7 +2564,7 @@ class Terminal {
             new TerminalRender(
                 this.termLayout,
                 this.settingsStore.state.colors,
-                this.DOM.preFontFamily,
+                TerminalDOM.getGlobalVarValue('--term-font-family'),
                 this.regScr,
                 this.dataSet,
                 this.AsnaTerm5250).renderInputCanvasSections(this.AsnaTerm5250, pos, pos + fld.len);
@@ -2752,9 +2742,9 @@ class Terminal {
         this.setScreenSize(this.termLayout._5250.rows, this.termLayout._5250.cols, this.termLayout._5250.msgLight);
         this.DOM.setTerminalFont(this.termLayout._5250);
         this.toolbar = new TerminalToolbar();
-        this.toolbar.create(this.termLayout, this.DOM.preFontFamily, this.settingsStore.state.colors);
+        this.toolbar.create(this.termLayout, TerminalDOM.getGlobalVarValue('--term-font-family'), this.settingsStore.state.colors);
 
-        new TerminalRender(this.termLayout, this.settingsStore.state.colors, this.DOM.preFontFamily, this.regScr, this.dataSet, this.AsnaTerm5250).render();
+        new TerminalRender(this.termLayout, this.settingsStore.state.colors, TerminalDOM.getGlobalVarValue('--term-font-family'), this.regScr, this.dataSet, this.AsnaTerm5250).render();
 
         this.updateCursor();
         this.renderStatusBar();

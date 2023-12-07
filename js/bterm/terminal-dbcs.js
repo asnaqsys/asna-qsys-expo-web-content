@@ -25,14 +25,14 @@ const IDEOGRAPHIC_SPACE = '\u3000';
 
 
 class DBCS {
-    constructor(termLayout, preFontFamily) {
+    constructor(termLayout, fontFamily) {
         this.termLayout = termLayout;
-        this.preFontFamily = preFontFamily;
-        this.singleByteCharSetWidth = TerminalDOM.getCharWidth('M', termLayout, preFontFamily);
+        this.fontFamily = fontFamily;
+        this.singleByteCharSetWidth = TerminalDOM.getCharWidth('M', termLayout, fontFamily);
     }
 
     isWide(charCandidate) {
-        const charCandidateWidth = TerminalDOM.getCharWidth(charCandidate, this.termLayout, this.preFontFamily);
+        const charCandidateWidth = TerminalDOM.getCharWidth(charCandidate, this.termLayout, this.fontFamily);
         return charCandidateWidth > this.singleByteCharSetWidth + (0.5 * this.singleByteCharSetWidth);
     }
 
