@@ -516,37 +516,46 @@ class TerminalDOM {
     }
 
     setTerminalFont(_5250Cursor) {
+        const gridColWidth = parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
         const t5250 = document.getElementById('AsnaTerm5250');
+
         if (t5250) {
             const fontFamily = TerminalDOM.getGlobalVarValue('--term-font-family');
-            let fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
+            const cachedFontSize = theFontSizeCache.get(fontFamily, gridColWidth);
 
-            const a = document.createElement('pre');
-            a.className = 'bterm-render-section';
-            a.style.gridColumnStart = 79;               // !!! change to 132 when display indicates.
-            a.style.gridColumnEnd = 80;
-            a.textContent = 'M';
-            t5250.appendChild(a);
-
-            const leftPadM = ' '.repeat(78) + 'M';
-            let mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
-
-            let ra = TerminalDOM.getGridElementClientRight(a);
-            const t0 = performance.now();
-            let t1 = t0;
-
-            while (mb.w > ra && fontSize > 5.0 && (t1 - t0) < (10 * 1000)) {
-                fontSize -= 0.001;
-                TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px` );
-                ra = TerminalDOM.getGridElementClientRight(a);
-                mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
-                t1 = performance.now();
+            if (cachedFontSize) {
+                TerminalDOM.setGlobalVar('--term-font-size', `${cachedFontSize}px`);
             }
+            else {
+                let fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
 
-            t5250.removeChild(a);
+                const a = document.createElement('pre');
+                a.className = 'bterm-render-section';
+                a.style.gridColumnStart = 79;               // !!! change to 132 when display indicates.
+                a.style.gridColumnEnd = 80;
+                a.textContent = 'M';
+                t5250.appendChild(a);
+
+                const leftPadM = ' '.repeat(78) + 'M';
+                let mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
+                let ra = TerminalDOM.getGridElementClientRight(a);
+                const t0 = performance.now();
+                let t1 = t0;
+
+                while (mb.w > ra && fontSize > 5.0 && (t1 - t0) < (10 * 1000)) {
+                    fontSize -= 0.001;
+                    TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
+                    ra = TerminalDOM.getGridElementClientRight(a);
+                    mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
+                    t1 = performance.now();
+                }
+
+                t5250.removeChild(a);
+                theFontSizeCache.save(fontFamily, gridColWidth, fontSize);
+            }
         }
 
-        _5250Cursor.cursor.w = parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
+        _5250Cursor.cursor.w = gridColWidth; // TO-DO: remove cursor.w --     parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
     }
 
     static getGridElementClientRight(gridEl) {
@@ -776,7 +785,6 @@ class TerminalToolbar {
     }
 }
 
-const MAX_CACHE_ENTRIES = 1000;
 
 //class MeasureCache {
 //    constructor() {
@@ -804,5 +812,42 @@ const MAX_CACHE_ENTRIES = 1000;
 //}
 
 //const theMeasureCache = new MeasureCache();
+
+// const MAX_CACHE_ENTRIES = 1000;
+
+class FontSizeCache {
+    constructor() {
+        this.byFontFamily = [];
+    }
+
+    save(fontFamily, gridColWidth, fontSize) {
+        let byWidth = [];
+        if (!this.byFontFamily[fontFamily]) {
+            this.byFontFamily[fontFamily] = byWidth;
+            this.byFontFamily.length++;
+        }
+        else {
+            byWidth = this.byFontFamily[fontFamily];
+        }
+
+        const widthHash = FontSizeCache.fixFloat(gridColWidth);
+        const found = byWidth[widthHash] != null;
+        byWidth[widthHash] = fontSize;
+        if (!found) { byWidth.length++; }
+    }
+
+    get(fontFamily, gridColWidth) {
+        if (!this.byFontFamily[fontFamily]) { return null; }
+
+        return this.byFontFamily[fontFamily][FontSizeCache.fixFloat(gridColWidth)];
+    }
+
+    static fixFloat(num) {
+        return num.toFixed(4);
+    }
+}
+
 let landscapeDevHeight = NaN;
 let cssVarCache = [];
+
+const theFontSizeCache = new FontSizeCache();
