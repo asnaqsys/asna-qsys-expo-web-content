@@ -540,13 +540,13 @@ class Terminal {
 
         this.beep = new Beep(ID.ERROR_SOUND);
 
-        //if (this.termCursor) {
+        if (this.termCursor) {
         //    if ( true /*ASNA.Vendor.IsDesktop() || ASNA.Vendor.IsWin8Touch() */) {
         //        if (this.termCursor.tagName !== 'INPUT') {  // backwards compatibility
         //            this.termCursor = this.DOM.replaceWithInputText(this.termCursor);
         //        }
 
-        //        this.termCursor.maxLength = 1;
+            this.termCursor.maxLength = 1;
         //        if (typeof (this.termCursor.autocomplete) !== 'undefined') {
         //            this.termCursor.autocomplete = 'off';
         //        }
@@ -554,7 +554,7 @@ class Terminal {
         //    //else {
         //    //    this.termCursor.style.display = 'block';
         //    //}
-        //}
+        }
     }
 
     adjustCanvasSize() {
