@@ -63,7 +63,6 @@ class Terminal {
         this.processDup = this.processDup.bind(this);
         this.processEnd = this.processEnd.bind(this);
         this.processErase = this.processErase.bind(this);
-        this.moveCursor = this.moveCursor.bind(this);
         this.processField = this.processField.bind(this);
         this.processFieldExit = this.processFieldExit.bind(this);
         this.processFieldExitEnter = this.processFieldExitEnter.bind(this);
@@ -338,11 +337,12 @@ class Terminal {
         }
 
         this.DOM = new TerminalDOM();
-        this.DOM.findPreFontFamily();
+        // this.DOM.findPreFontFamily();
         if (!this.DOM.isValidMonospace())
-            this.DOM.setPreFontFamily('Monospace');
+            this.DOM.setGlobalVar('--term-font-family', 'Consolas, monospace;');
 
         this.lookupTopElements();   // Firefox needs this explicit lookup.
+
         this.textSelect = new TextSelect(this.AsnaTermTextSelection);
 
         this.srcStatusbarHtml = document.getElementById(ID.STATUSBAR).innerHTML;
@@ -355,15 +355,19 @@ class Terminal {
             TerminalRender.clearCanvas(this.AsnaTerm5250);
         }
 
-        // init();
+        // this.init();
         this.updateChromeColors(this.settingsStore.state.colors);
         this.initTerminal();
+
+        this.AsnaTerm5250.style.gridTemplateColumns = `repeat(${this.termLayout._5250.cols}, var(--term-col-width))`;
+        this.AsnaTerm5250.style.gridTemplateRows = `repeat(${this.termLayout._5250.rows}, var(--term-row-height))`;
+
         this.readSubmitResponse();
 
         this.saveInzFieldValues();
         this.saveManFillFieldValues();
         this.newPageCursorInit();
-        this.DOM.setTerminalFont(this.termLayout._5250);
+        // this.DOM.setTerminalFont(this.termLayout._5250);
 
         this.DBCS = new DBCS(this.termLayout, this.DOM.preFontFamily);
 
@@ -401,7 +405,7 @@ class Terminal {
 */
         IbmKeypad.init(this.AsnaTermFacade, this.termLayout, this.executeVirtualKey, this.actionMap, this.settingsStore);
 
-        FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(this.termLayout), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
+        // !!! FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(this.termLayout), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
 
         Settings.init(ID.STATUSBAR, SETTINGS_OPENING_HEIGHT, this.settingsStore);
 /*
@@ -536,21 +540,21 @@ class Terminal {
 
         this.beep = new Beep(ID.ERROR_SOUND);
 
-        if (this.termCursor) {
-            if ( true /*ASNA.Vendor.IsDesktop() || ASNA.Vendor.IsWin8Touch() */) {
-                if (this.termCursor.tagName !== 'INPUT') {  // backwards compatibility
-                    this.termCursor = this.DOM.replaceWithInputText(this.termCursor);
-                }
+        //if (this.termCursor) {
+        //    if ( true /*ASNA.Vendor.IsDesktop() || ASNA.Vendor.IsWin8Touch() */) {
+        //        if (this.termCursor.tagName !== 'INPUT') {  // backwards compatibility
+        //            this.termCursor = this.DOM.replaceWithInputText(this.termCursor);
+        //        }
 
-                this.termCursor.maxLength = 1;
-                if (typeof (this.termCursor.autocomplete) !== 'undefined') {
-                    this.termCursor.autocomplete = 'off';
-                }
-            }
-            else {
-                this.termCursor.style.display = 'block';
-            }
-        }
+        //        this.termCursor.maxLength = 1;
+        //        if (typeof (this.termCursor.autocomplete) !== 'undefined') {
+        //            this.termCursor.autocomplete = 'off';
+        //        }
+        //    }
+        //    //else {
+        //    //    this.termCursor.style.display = 'block';
+        //    //}
+        //}
     }
 
     adjustCanvasSize() {
@@ -580,15 +584,15 @@ class Terminal {
         this.termLayout._5250.msgLight = msgLight;
 
         if (this.termLayout.h > 0) {
-            this.termLayout.status.h = this.termLayout.h / (this.termLayout._5250.rows + 1); // Rows + Statusbar
+            const rowHeightPix = this.termLayout.h / (this.termLayout._5250.rows + 1); // Rows + Statusbar
+            this.termLayout.status.h = rowHeightPix;
 
-            let rowHeightPix = this.termLayout.status.h;
             let rowCellWidth = this.termLayout.w / this.termLayout._5250.cols;
 
             this.termLayout._5250.w = rowCellWidth * this.termLayout._5250.cols;
             this.termLayout._5250.h = rowHeightPix * this.termLayout._5250.rows;
 
-            this.termLayout._5250.cursor.w = rowCellWidth;
+            //  this.termLayout._5250.cursor.w = rowCellWidth;
             this.termLayout._5250.cursor.h = rowHeightPix;
 
             this.termLayout._5250.fontSizePix = rowHeightPix - this.calcLineWidth(rowHeightPix); // font-size is adjusted later, by measuring width.
@@ -596,6 +600,10 @@ class Terminal {
 
             this.termLayout.status.l = 0;
             this.termLayout.status.t = this.termLayout.h - this.termLayout.status.h;
+
+            TerminalDOM.setGlobalVar('--term-col-width', `${rowCellWidth}px`);
+            TerminalDOM.setGlobalVar('--term-row-height', `${rowHeightPix}px`);
+            TerminalDOM.setGlobalVar('--term-font-size', `${rowHeightPix}px`); // Start with font equal to row-height
         }
     }
 
@@ -1797,7 +1805,7 @@ class Terminal {
         const termRender = new TerminalRender(this.termLayout, colors, this.DOM.preFontFamily, this.regScr, this.dataSet, this.AsnaTerm5250);
         this.AsnaTermFacade.style.backgroundColor = termRender.getWebColor('bkgd');
         this.AsnaTermFacade.style.backgroundColor = termRender.getWebColor('bkgd');
-        this.termCursor.style.backgroundColor = colors.cursor;
+        // this.termCursor.style.backgroundColor = colors.cursor;
         this.AsnaTermTextSelection.style.backgroundColor = colors.sel;
     }
 
@@ -1944,20 +1952,20 @@ class Terminal {
         AsnaTermFacade.style.height = this.termLayout.h + 'px';
 
         if (!isNaN(this.termLayout._5250.cols) && !isNaN(this.termLayout._5250.cursor.w)) {
-            this.termLayout._5250.l = 0;
+            this.termLayout._5250.l = 0; // ???
             this.termLayout._5250.t = 0;
 
-            this.termLayout._5250.w = this.termLayout._5250.cursor.w * this.termLayout._5250.cols;
-            this.termLayout._5250.h = this.termLayout._5250.cursor.h * this.termLayout._5250.rows;
+            this.termLayout._5250.w = /*this.termLayout._5250.cursor.w*/ TerminalDOM.getGlobalVarValue('--term-col-width') * this.termLayout._5250.cols;
+            this.termLayout._5250.h = /*this.termLayout._5250.cursor.h*/ TerminalDOM.getGlobalVarValue('--term-row-height') * this.termLayout._5250.rows;
 
-            this.AsnaTerm5250.style.width = this.termLayout._5250.w + 'px';
-            this.AsnaTerm5250.style.height = this.termLayout._5250.h + 'px';
+            //this.AsnaTerm5250.style.width = this.termLayout._5250.w + 'px';
+            //this.AsnaTerm5250.style.height = this.termLayout._5250.h + 'px';
             this.AsnaTerm5250.style.zIndex = ZINDEX.TERMINAL_5250_TEXT;
 
-            if (this.termLayout.w > this.termLayout._5250.w) {
-                this.termLayout._5250.l = (this.termLayout.w - this.termLayout._5250.w) / 2;
-                this.AsnaTerm5250.style.left = this.termLayout._5250.l + 'px';
-            }
+            //if (this.termLayout.w > this.termLayout._5250.w) {
+            //    this.termLayout._5250.l = (this.termLayout.w - this.termLayout._5250.w) / 2;
+            //    this.AsnaTerm5250.style.left = this.termLayout._5250.l + 'px';
+            //}
         }
     }
 
@@ -1968,36 +1976,38 @@ class Terminal {
         const rect = this.getRect(this.cursor.row, this.cursor.col, 1, 1);
         const nonChar = bkgChar === '\0' || sa && sa.screenAttr && sa.screenAttr.nonDisp;
 
-        this.termCursor.style.fontFamily = this.DOM.preFontFamily;
-        this.termCursor.style.fontSize = this.termLayout._5250.fontSizePix + 'px';
-        this.termCursor.style.backgroundColor = this.settingsStore.state.colors.cursor;
+        //this.termCursor.style.fontFamily = this.DOM.preFontFamily;
+        //this.termCursor.style.fontSize = this.termLayout._5250.fontSizePix + 'px';
+        //this.termCursor.style.backgroundColor = this.settingsStore.state.colors.cursor;
 
-        this.termCursor.style.position = 'absolute';
+        //this.termCursor.style.position = 'absolute';
+
+
         this.termCursor.style.top = rect.t + 'px';
         this.termCursor.style.left = rect.l + 'px';
 
         this.termCursor.style.width = rect.w + 'px';
 
-        if (!nonChar) {
-            this.termCursor.style.width = TerminalDOM.getCharWidth(bkgChar, this.termLayout, this.DOM.preFontFamily) + 'px'; // Possibly DBCS
-        }
+        //if (!nonChar) {
+        //    this.termCursor.style.width = TerminalDOM.getCharWidth(bkgChar, this.termLayout, this.DOM.preFontFamily) + 'px'; // Possibly DBCS
+        //}
 
         const subSectMetr = this.getSubSectionMetrics(this.cursor.row, pos - 1);
 
-        if (subSectMetr && subSectMetr.t) { // recalc .left
-            const map = new BufferMapping(this.termLayout._5250.cols);
+        //if (subSectMetr && subSectMetr.t) { // recalc .left
+        //    const map = new BufferMapping(this.termLayout._5250.cols);
 
-            const lm = this.getRect(this.cursor.row, 0, 1, 1);
-            const colOffset = map.colFromPos(subSectMetr.pos);
-            const offsetX = colOffset * rect.w;
-            const substrW = TerminalDOM.htmlMeasureText(this.termLayout._5250.fontSizePix, this.DOM.preFontFamily, subSectMetr.t).w;
+        //    const lm = this.getRect(this.cursor.row, 0, 1, 1);
+        //    const colOffset = map.colFromPos(subSectMetr.pos);
+        //    const offsetX = colOffset * rect.w;
+        //    const substrW = TerminalDOM.htmlMeasureText(this.termLayout._5250.fontSizePix, this.DOM.preFontFamily, subSectMetr.t).w;
 
-            this.termCursor.style.left = (lm.l + offsetX + substrW) + 'px';
-        }
+        //    this.termCursor.style.left = (lm.l + offsetX + substrW) + 'px';
+        //}
 
         this.termCursor.style.height = rect.h + 'px';
 
-        TerminalDOM.resetBoxStyle(this.termCursor.style);
+        // TerminalDOM.resetBoxStyle(this.termCursor.style);
 
         if (false /*ASNA.Vendor.IsDesktop() || ASNA.Vendor.IsWin8Touch()*/) { // $TO-DO: check if cond should be: ! ASNA.Vendor.IsDesktop() || ASNA.Vendor.IsWin8Touch()
             TerminalDOM.alignInputText(this.termCursor, rect.h, termLayout._5250.fontSizePix);
@@ -2026,6 +2036,7 @@ class Terminal {
     }
 
     getRect(row, col, rows, cols) {
+        /*
         const vertPadding = TerminalRender.calcTextVertPadding(this.termLayout);
         const height = this.termLayout._5250.cursor.h - vertPadding + CHAR_MEASURE.UNDERSCORE_CHAR_HEIGHT;
         const top = this.termLayout._5250.t + BufferMapping.rowToPixel(row, this.termLayout) + vertPadding;
@@ -2037,6 +2048,15 @@ class Terminal {
         }
 
         return { l: this.termLayout._5250.l + BufferMapping.colToPixel(col, this.termLayout), t: top, w: this.termLayout._5250.cursor.w * cols, h: rH };
+        */
+
+        const rTerm = this.AsnaTerm5250.getBoundingClientRect();
+        return {
+            l: rTerm.x + BufferMapping.colToPixel(col, this.termLayout),
+            t: rTerm.y + BufferMapping.rowToPixel(row, this.termLayout),
+            w: parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width')) * cols,
+            h: parseFloat(TerminalDOM.getGlobalVarValue('--term-row-height')) * rows
+        };
     }
 
     getSubSectionMetrics(row, pos) {
@@ -2741,7 +2761,7 @@ class Terminal {
 
         this.adjust_5250Div();
         Settings.init(ID.STATUSBAR, SETTINGS_OPENING_HEIGHT, this.settingsStore );
-        FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(this.termLayout), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
+        // !!! FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(this.termLayout), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
         if (this.enterBigButton) {
             this.enterBigButton.calcLocation(this.termLayout);
         }
@@ -2819,6 +2839,7 @@ class Terminal {
 
         this.initTerminal();
         this.processServerResponse(stream);
+
         Keyboard.state = KEYBOARD_STATE.NORMAL;
         document.body.style.cursor = 'auto';
 

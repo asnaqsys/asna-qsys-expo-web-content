@@ -104,30 +104,36 @@ class TerminalRender {
     }
 
     createCanvasSection(frag, regScr, fromPos, toPos, row, col, bkColor, color, reverse, underscore) {
-
         const len = toPos - fromPos + 1;
         const text = Screen.copyPositionsFromBuffer(regScr, fromPos, toPos);
         const rowStr = '' + row;
         const colStr = '' + col;
-        const vertPadding = TerminalRender.calcTextVertPadding(this.termLayout);
-        const section = document.createElement('div');
+        // const vertPadding = TerminalRender.calcTextVertPadding(this.termLayout);
+        const section = document.createElement('pre');
 
-        section.type = 'text';
+        section.className = 'bterm-render-section';
+
+        // section.type = 'text';
         section.id = 'r' + StringExt.padLeft(rowStr, 2, '0') + 'c' + StringExt.padLeft(colStr, 3, '0');
-        section.style.fontFamily = this.preFontFamily;
-        section.style.fontSize = this.termLayout._5250.fontSizePix + 'px';
-        section.style.position = 'absolute';
-        section.style.left = (col * this.termLayout._5250.cursor.w) + 'px';
-        section.style.top = (this.termLayout._5250.t + (row * this.termLayout._5250.cursor.h)) + 'px';
+        section.style.gridColumnStart = col + 1;
+        section.style.gridColumnEnd = col + 1 + len;
+        section.style.gridRowStart = row + 1;
+        section.style.gridRowEnd = row + 1;
+
+        //section.style.fontFamily = this.preFontFamily;
+        //section.style.fontSize = this.termLayout._5250.fontSizePix + 'px';
+        //section.style.position = 'absolute';
+        //section.style.left = (col * this.termLayout._5250.cursor.w) + 'px';
+        //section.style.top = (this.termLayout._5250.t + (row * this.termLayout._5250.cursor.h)) + 'px';
         // section.style.width = (this.termLayout._5250.cursor.w * len) + 'px';
-        section.style.height = (this.termLayout._5250.cursor.h - vertPadding + CHAR_MEASURE.UNDERSCORE_CHAR_HEIGHT) + 'px';
+        // section.style.height = (this.termLayout._5250.cursor.h - vertPadding + CHAR_MEASURE.UNDERSCORE_CHAR_HEIGHT) + 'px';
         section.setAttribute('data-asna-len', len);
 
-        TerminalDOM.makeUnselectable(section);
-        TerminalDOM.resetBoxStyle(section.style);
+        // TerminalDOM.makeUnselectable(section);
+        // TerminalDOM.resetBoxStyle(section.style);
 
-        section.style.overflow = 'hidden';
-        section.style.paddingTop = vertPadding + 'px';
+        // section.style.overflow = 'hidden';
+        // section.style.paddingTop = vertPadding + 'px';   ???? 
         section.style.borderBottomWidth = CHAR_MEASURE.UNDERLINE_HEIGHT + 'px';
 
         this.setCanvasSectionText(section, text, bkColor, color, reverse, underscore, section.id === 'r19c006'); // Instrument for automated testing
@@ -203,8 +209,9 @@ class TerminalRender {
         else {
             section.style.borderBottomWidth = '0px';
         }
+        section.textContent = text;
 
-        TerminalRender.setDivText(section, text, this.preFontFamily, instTesting);
+        // TerminalRender.setDivText(section, text, /*this.preFontFamily,*/ instTesting);
     }
 
     completeEmptyFieldCanvasSections (frag, elRowCol) {
@@ -276,7 +283,7 @@ class TerminalRender {
         // Note: one 5250 field may be broken-down in more than one canvas sections (virtual fields).
         let childNode;
         for (let index = 0; (childNode=termSectionsParent.childNodes[index])!=null; index++) {
-            if (childNode.tagName === 'DIV' && childNode.getAttribute('data-asna-len')) {
+            if (childNode.tagName === 'PRE' && childNode.getAttribute('data-asna-len')) {
                 const virtField = TerminalRender.parseCanvasSectionId(childNode);
 
                 if (virtField.row >= fromRow && virtField.row <= toRow && Screen.isRowColInInputPos(this.regScr, virtField.row, virtField.col)) {
@@ -462,7 +469,7 @@ class TerminalRender {
 
         for (let index = 0; term5250ParentElement.childNodes[index]; index++) {
             const childNode = term5250ParentElement.childNodes[index];
-            if (childNode.tagName === 'DIV' && childNode.getAttribute('data-asna-len')) {
+            if (childNode.tagName === 'PRE' && childNode.getAttribute('data-asna-len')) {
                 regenBufferSections[regenBufferSections.length] = childNode;
             }
         }

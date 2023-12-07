@@ -121,6 +121,41 @@ class TerminalDOM {
         el.style.WebkitUserSelect = 'none'; // Chrome
     }
 
+    static measureHtmlMonoText(fontHeight, text) {
+        /* let result = theMeasureCache.find(fontHeight, preFontFamily, text);
+        if (result) {
+            // console.log(`cache hit: ${text}`);
+            return result;
+        }
+        */      // TO-DO: Optimize with Cache!!!
+
+        const measureDiv = document.createElement('pre'); //  'div');
+        measureDiv.type = 'text';
+        measureDiv.class = 'bterm-render-section';
+
+        measureDiv.style.fontSize = fontHeight + 'px';
+        measureDiv.style.position = 'absolute';
+        measureDiv.style.visibility = 'hidden';
+        measureDiv.style.width = 'auto';
+        measureDiv.style.height = 'auto';
+        measureDiv.style.overflow = 'visible';
+        measureDiv.style.border = 0;
+
+        measureDiv.innerHTML = text;
+        document.body.appendChild(measureDiv);
+
+        const height = measureDiv.clientHeight;
+        const width = measureDiv.clientWidth;
+
+        document.body.removeChild(measureDiv);
+
+        let result = { w: width, h: height };
+        // TO-DO: Optimize with Cache!!!   theMeasureCache.add(fontHeight, preFontFamily, text, result);
+
+        return result;
+    }
+
+    // TODO: Make obsolete ...
     static htmlMeasureText(fontHeight, preFontFamily, text) {
         let result = theMeasureCache.find(fontHeight, preFontFamily, text);
         if (result) {
@@ -481,11 +516,25 @@ class TerminalDOM {
     }
 
     isValidMonospace() {
-        return TerminalDOM.htmlMeasureText(10, this.preFontFamily, "M").w === TerminalDOM.htmlMeasureText(10, this.preFontFamily, "i").w;
+        return TerminalDOM.htmlMeasureText(10, 'M').w === TerminalDOM.htmlMeasureText(10, 'i').w;
     }
 
-    setPreFontFamily(fontFamily) {
-        this.preFontFamily = fontFamily;
+    //setPreFontFamily(fontFamily) {
+    //    this.preFontFamily = fontFamily;
+    //}
+
+    static setGlobalVar(varname, varvalue) {
+        const cssVarRoot = document.documentElement.style;
+        if (cssVarRoot) {
+            cssVarRoot.setProperty(varname, varvalue);
+        }
+    }
+
+    static getGlobalVarValue(varname) {
+        const cssVarRoot = document.documentElement.style;
+        if (cssVarRoot) {
+            return cssVarRoot.getPropertyValue(varname);
+        }
     }
 
     static getElementByName(name) {
@@ -518,34 +567,92 @@ class TerminalDOM {
     }
 
     setTerminalFont(_5250Cursor) {
-        const requestedFontHeight = _5250Cursor.fontSizePix;
-        const termW = _5250Cursor.cursor.w * this.sample132.length;
+        //const requestedFontHeight = TerminalDOM.getGlobalVarValue('--term-row-height'); //   _5250Cursor.fontSizePix;
+        //const cellW = TerminalDOM.getGlobalVarValue('--term-col-width');
+        //_5250Cursor.fontSizePix = requestedFontHeight; // TEST !!!
+        //const termW = /*_5250Cursor.cursor.w*/ cellW * this.sample132.length;
 
-        do {
-            if (TerminalDOM.htmlMeasureText(_5250Cursor.fontSizePix, this.preFontFamily, this.sample132).w <= termW) {
-                break;
+        //do {
+        //    if (TerminalDOM.measureHtmlMonoText(_5250Cursor.fontSizePix, this.sample132).w <= termW) {
+        //        break;
+        //    }
+
+        //    _5250Cursor.fontSizePix -= 0.1;
+        //    if (_5250Cursor.fontSizePix > 0.0) {
+        //        TerminalDOM.setGlobalVar('--term-font-size', `${_5250Cursor.fontSizePix}px`);
+        //    }
+        //    else {
+        //        break;
+        //    }
+
+        //} while (_5250Cursor.fontSizePix > 0.0);
+
+        //do {
+        //    const oneCharMeasure = TerminalDOM.measureHtmlMonoText(_5250Cursor.fontSizePix, SAMPLE_ONE);
+
+        //    if (oneCharMeasure.h <= _5250Cursor.cursor.h) {
+        //        break;
+        //    }
+
+        //    _5250Cursor.fontSizePix--;
+        //    if (_5250Cursor.fontSizePix > 0) {
+        //        TerminalDOM.setGlobalVar('--term-font-size', `${_5250Cursor.fontSizePix}px`);
+        //    }
+
+        //} while (_5250Cursor.fontSizePix > 0);
+
+        //if (_5250Cursor.fontSizePix <= 0) { // Defensive programming
+        //    _5250Cursor.fontSizePix = requestedFontHeight;
+        //    TerminalDOM.setGlobalVar('--term-font-size', `${_5250Cursor.fontSizePix}px`);
+        //}
+
+        // Need to reduce font a bit more ...
+        const t5250 = document.getElementById('AsnaTerm5250');
+        if (t5250) {
+            const a = document.createElement('pre');
+            a.className = 'bterm-render-section';
+            // a.style.color = 'white'; // Just for Debug info.
+            a.style.gridColumnStart = 79;
+            a.style.gridColumnEnd = 80;
+            a.textContent = 'M';
+            t5250.appendChild(a);
+
+            let fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
+            const leftPadM = ' '.repeat(78) + 'M';
+            let mb = TerminalDOM.measureHtmlMonoText(fontSize, leftPadM);
+
+            //const b = document.createElement('pre'); // Just for Debug info.
+            //b.className = 'bterm-render-section';
+            //b.style.color = 'white'; // Just for Debug info.
+            //b.style.gridColumnStart = 1;
+            //b.style.gridColumnEnd = 80;
+            //b.style.gridRowStart = 2;
+            //b.style.gridRowEnd = 2;
+            //b.textContent = leftPadM;
+            //t5250.appendChild(b);
+
+            let ra = TerminalDOM.getGridElementClientRight(a);
+            const t0 = performance.now();
+            let t1 = t0;
+
+            while (mb.w > ra && fontSize > 5.0 && (t1 - t0) < (10 * 1000)) {
+                fontSize -= 0.001;
+                TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px` );
+                ra = TerminalDOM.getGridElementClientRight(a);
+                mb = TerminalDOM.measureHtmlMonoText(fontSize, leftPadM);
+                t1 = performance.now();
             }
 
-            _5250Cursor.fontSizePix--;
-
-        } while (_5250Cursor.fontSizePix > 0);
-
-        do {
-            const oneCharMeasure = TerminalDOM.htmlMeasureText(_5250Cursor.fontSizePix, this.preFontFamily, SAMPLE_ONE);
-
-            if (oneCharMeasure.h <= _5250Cursor.cursor.h) {
-                break;
-            }
-
-            _5250Cursor.fontSizePix--;
-
-        } while (_5250Cursor.fontSizePix > 0);
-
-        if (_5250Cursor.fontSizePix <= 0) { // Defensive programming
-            _5250Cursor.fontSizePix = requestedFontHeight;
+            t5250.removeChild(a);
         }
 
-        _5250Cursor.cursor.w = TerminalDOM.htmlMeasureText(_5250Cursor.fontSizePix, this.preFontFamily, this.sample132).w / this.sample132.length;
+        // const m = TerminalDOM.measureHtmlMonoText(_5250Cursor.fontSizePix, this.sample132);
+        _5250Cursor.cursor.w = parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width')); //  m.w / this.sample132.length;
+    }
+
+    static getGridElementClientRight(gridEl) {
+        const rect = gridEl.getBoundingClientRect();
+        return rect.right;
     }
 
     static getOutputElement(name) {
