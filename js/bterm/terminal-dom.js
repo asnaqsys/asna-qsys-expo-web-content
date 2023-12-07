@@ -99,14 +99,14 @@ const CHAR_MEASURE = {
     UNDERSCORE_CHAR_HEIGHT: 1
 };
 
-const SAMPLE_ONE = 'M';
-const SAMPLE_44 = 'MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM'; // 44 characters
+// const SAMPLE_ONE = 'M';
+// const SAMPLE_44 = 'MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM'; // 44 characters
 const MAX_COORD_STR = '99,999';
 
 class TerminalDOM {
     constructor() {
-        this.preFontFamily = '';
-        this.sample132 = SAMPLE_44 + SAMPLE_44 + SAMPLE_44;
+        this.preFontFamily = '';  // !!! Remove -- we have it in a global var now 
+        // this.sample132 = SAMPLE_44 + SAMPLE_44 + SAMPLE_44;
     }
 
     static resetBoxStyle(style) {
@@ -121,15 +121,14 @@ class TerminalDOM {
         el.style.WebkitUserSelect = 'none'; // Chrome
     }
 
-    static measureHtmlMonoText(fontHeight, text) {
-        /* let result = theMeasureCache.find(fontHeight, preFontFamily, text);
+    static measureHtmlMonoText(fontHeight, fontFamily, text) {
+        let result = theMeasureCache.find(fontHeight, fontFamily, text);
         if (result) {
-            // console.log(`cache hit: ${text}`);
+            console.log(`cache hit: ${text}`);
             return result;
         }
-        */      // TO-DO: Optimize with Cache!!!
 
-        const measureDiv = document.createElement('pre'); //  'div');
+        const measureDiv = document.createElement('pre');
         measureDiv.type = 'text';
         measureDiv.class = 'bterm-render-section';
 
@@ -149,20 +148,14 @@ class TerminalDOM {
 
         document.body.removeChild(measureDiv);
 
-        let result = { w: width, h: height };
-        // TO-DO: Optimize with Cache!!!   theMeasureCache.add(fontHeight, preFontFamily, text, result);
+        result = { w: width, h: height };
+        theMeasureCache.add(fontHeight, fontFamily, text, result);
 
         return result;
     }
 
     // TODO: Make obsolete ...
     static htmlMeasureText(fontHeight, preFontFamily, text) {
-        let result = theMeasureCache.find(fontHeight, preFontFamily, text);
-        if (result) {
-            // console.log(`cache hit: ${text}`);
-            return result;
-        }
-
         const measureDiv = document.createElement('div');
         const isIE_7 = navigator.appVersion.indexOf('MSIE 7.') > 0;
 
@@ -191,10 +184,7 @@ class TerminalDOM {
 
         document.body.removeChild(measureDiv);
 
-        result = { w: width, h: height };
-        theMeasureCache.add(fontHeight, preFontFamily, text, result);
-
-        return result;
+        return { w: width, h: height };
     }
 
     static cssSelectorExists(selText) {
@@ -531,7 +521,7 @@ class TerminalDOM {
     }
 
     static getGlobalVarValue(varname) {
-        const cssVarRoot = document.documentElement.style;
+        var cssVarRoot = window.getComputedStyle(document.body);
         if (cssVarRoot) {
             return cssVarRoot.getPropertyValue(varname);
         }
@@ -567,69 +557,20 @@ class TerminalDOM {
     }
 
     setTerminalFont(_5250Cursor) {
-        //const requestedFontHeight = TerminalDOM.getGlobalVarValue('--term-row-height'); //   _5250Cursor.fontSizePix;
-        //const cellW = TerminalDOM.getGlobalVarValue('--term-col-width');
-        //_5250Cursor.fontSizePix = requestedFontHeight; // TEST !!!
-        //const termW = /*_5250Cursor.cursor.w*/ cellW * this.sample132.length;
-
-        //do {
-        //    if (TerminalDOM.measureHtmlMonoText(_5250Cursor.fontSizePix, this.sample132).w <= termW) {
-        //        break;
-        //    }
-
-        //    _5250Cursor.fontSizePix -= 0.1;
-        //    if (_5250Cursor.fontSizePix > 0.0) {
-        //        TerminalDOM.setGlobalVar('--term-font-size', `${_5250Cursor.fontSizePix}px`);
-        //    }
-        //    else {
-        //        break;
-        //    }
-
-        //} while (_5250Cursor.fontSizePix > 0.0);
-
-        //do {
-        //    const oneCharMeasure = TerminalDOM.measureHtmlMonoText(_5250Cursor.fontSizePix, SAMPLE_ONE);
-
-        //    if (oneCharMeasure.h <= _5250Cursor.cursor.h) {
-        //        break;
-        //    }
-
-        //    _5250Cursor.fontSizePix--;
-        //    if (_5250Cursor.fontSizePix > 0) {
-        //        TerminalDOM.setGlobalVar('--term-font-size', `${_5250Cursor.fontSizePix}px`);
-        //    }
-
-        //} while (_5250Cursor.fontSizePix > 0);
-
-        //if (_5250Cursor.fontSizePix <= 0) { // Defensive programming
-        //    _5250Cursor.fontSizePix = requestedFontHeight;
-        //    TerminalDOM.setGlobalVar('--term-font-size', `${_5250Cursor.fontSizePix}px`);
-        //}
-
-        // Need to reduce font a bit more ...
         const t5250 = document.getElementById('AsnaTerm5250');
         if (t5250) {
+            const fontFamily = TerminalDOM.getGlobalVarValue('--term-font-family');
+            let fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
+
             const a = document.createElement('pre');
             a.className = 'bterm-render-section';
-            // a.style.color = 'white'; // Just for Debug info.
             a.style.gridColumnStart = 79;
             a.style.gridColumnEnd = 80;
             a.textContent = 'M';
             t5250.appendChild(a);
 
-            let fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
             const leftPadM = ' '.repeat(78) + 'M';
-            let mb = TerminalDOM.measureHtmlMonoText(fontSize, leftPadM);
-
-            //const b = document.createElement('pre'); // Just for Debug info.
-            //b.className = 'bterm-render-section';
-            //b.style.color = 'white'; // Just for Debug info.
-            //b.style.gridColumnStart = 1;
-            //b.style.gridColumnEnd = 80;
-            //b.style.gridRowStart = 2;
-            //b.style.gridRowEnd = 2;
-            //b.textContent = leftPadM;
-            //t5250.appendChild(b);
+            let mb = TerminalDOM.measureHtmlMonoText(fontSize, fontFamily, leftPadM);
 
             let ra = TerminalDOM.getGridElementClientRight(a);
             const t0 = performance.now();
@@ -639,15 +580,14 @@ class TerminalDOM {
                 fontSize -= 0.001;
                 TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px` );
                 ra = TerminalDOM.getGridElementClientRight(a);
-                mb = TerminalDOM.measureHtmlMonoText(fontSize, leftPadM);
+                mb = TerminalDOM.measureHtmlMonoText(fontSize, fontFamily, leftPadM);
                 t1 = performance.now();
             }
 
             t5250.removeChild(a);
         }
 
-        // const m = TerminalDOM.measureHtmlMonoText(_5250Cursor.fontSizePix, this.sample132);
-        _5250Cursor.cursor.w = parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width')); //  m.w / this.sample132.length;
+        _5250Cursor.cursor.w = parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
     }
 
     static getGridElementClientRight(gridEl) {
@@ -883,19 +823,19 @@ class MeasureCache {
     constructor() {
         this.cache = [];
     }
-    static hash(fontHeight, preFontFamily, text) {
-        return StringExt.padRight(preFontFamily, 20, ' ') + fontHeight + text;
+    static hash(fontHeight, fontFamily, text) {
+        return StringExt.padRight(fontFamily, 40, ' ') + fontHeight + text;
     }
-    add(fontHeight, preFontFamily, text, measure) {
+    add(fontHeight, fontFamily, text, measure) {
         if (this.cache.length >= MAX_CACHE_ENTRIES) {
             console.log('MeasureCache - too may entries!');
             return;
         }
-        const hash = MeasureCache.hash(fontHeight, preFontFamily, text);
+        const hash = MeasureCache.hash(fontHeight, fontFamily, text);
         this.cache[hash] = measure;
     }
-    find(fontHeight, preFontFamily, text) {
-        const hash = MeasureCache.hash(fontHeight, preFontFamily, text);
+    find(fontHeight, fontFamily, text) {
+        const hash = MeasureCache.hash(fontHeight, fontFamily, text);
         return this.cache[hash];
     }
     clear() {
