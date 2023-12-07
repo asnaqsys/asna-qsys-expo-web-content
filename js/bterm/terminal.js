@@ -11,7 +11,7 @@ const FAKE_DUP = '*';
 
 import { TerminalHTML } from './terminal-html.js';
 import { TerminalMacros } from './terminal-macros.js';
-import { ID, ZINDEX, TerminalDOM, TerminalToolbar, CHAR_MEASURE } from './terminal-dom.js';
+import { ID, ZINDEX, TerminalDOM, TerminalToolbar } from './terminal-dom.js';
 import { Screen, Field, FieldFormatWord } from './terminal-screen.js';
 import { Base64, UnicodeToUTF8 } from '../base-64.js';
 import { TerminalRender  } from './terminal-render.js';
@@ -2002,12 +2002,6 @@ class Terminal {
 
         this.termCursor.style.height = rect.h + 'px';
 
-        // TerminalDOM.resetBoxStyle(this.termCursor.style);
-
-        if (false /*ASNA.Vendor.IsDesktop() || ASNA.Vendor.IsWin8Touch()*/) { // $TO-DO: check if cond should be: ! ASNA.Vendor.IsDesktop() || ASNA.Vendor.IsWin8Touch()
-            TerminalDOM.alignInputText(this.termCursor, rect.h, termLayout._5250.fontSizePix);
-        }
-
         if (nonChar) {
             bkgChar = ' ';
         }
@@ -2726,7 +2720,7 @@ class Terminal {
     }
 
     rebuildPage() {
-        TerminalDOM.clearCache();
+        // TerminalDOM.clearCache();
         this.textSelect.reset();
         TerminalRender.clearCanvas(this.AsnaTerm5250);
         this.toolbar.removeToolbars();

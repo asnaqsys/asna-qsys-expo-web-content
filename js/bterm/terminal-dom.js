@@ -121,13 +121,7 @@ class TerminalDOM {
         el.style.WebkitUserSelect = 'none'; // Chrome
     }
 
-    static measureHtmlMonoText(fontHeight, fontFamily, text) {
-        let result = theMeasureCache.find(fontHeight, fontFamily, text);
-        if (result) {
-            console.log(`cache hit: ${text}`);
-            return result;
-        }
-
+    static measureHtmlPreSectionText(fontHeight, text) {
         const measureDiv = document.createElement('pre');
         measureDiv.type = 'text';
         measureDiv.class = 'bterm-render-section';
@@ -148,10 +142,7 @@ class TerminalDOM {
 
         document.body.removeChild(measureDiv);
 
-        result = { w: width, h: height };
-        theMeasureCache.add(fontHeight, fontFamily, text, result);
-
-        return result;
+        return { w: width, h: height };
     }
 
     // TODO: Make obsolete ...
@@ -287,9 +278,9 @@ class TerminalDOM {
         }
     }
 
-    static clearCache() {
-        theMeasureCache.clear();
-    }
+    //static clearCache() {
+    //    theMeasureCache.clear();
+    //}
 
     static getViewportDim(landscape) {
         let w = window.screen.availWidth;
@@ -480,9 +471,15 @@ class TerminalDOM {
         if (cssVarRoot) {
             cssVarRoot.setProperty(varname, varvalue);
         }
+        let found = cssVarCache[varname] != null;
+        cssVarCache[varname] = varvalue;
+        if (!found) { cssVarCache.length++; }
     }
 
     static getGlobalVarValue(varname) {
+        if (cssVarCache[varname]) {
+            return cssVarCache[varname];
+        }
         var cssVarRoot = window.getComputedStyle(document.body);
         if (cssVarRoot) {
             return cssVarRoot.getPropertyValue(varname);
@@ -526,13 +523,13 @@ class TerminalDOM {
 
             const a = document.createElement('pre');
             a.className = 'bterm-render-section';
-            a.style.gridColumnStart = 79;
+            a.style.gridColumnStart = 79;               // !!! change to 132 when display indicates.
             a.style.gridColumnEnd = 80;
             a.textContent = 'M';
             t5250.appendChild(a);
 
             const leftPadM = ' '.repeat(78) + 'M';
-            let mb = TerminalDOM.measureHtmlMonoText(fontSize, fontFamily, leftPadM);
+            let mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
 
             let ra = TerminalDOM.getGridElementClientRight(a);
             const t0 = performance.now();
@@ -542,7 +539,7 @@ class TerminalDOM {
                 fontSize -= 0.001;
                 TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px` );
                 ra = TerminalDOM.getGridElementClientRight(a);
-                mb = TerminalDOM.measureHtmlMonoText(fontSize, fontFamily, leftPadM);
+                mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
                 t1 = performance.now();
             }
 
@@ -781,30 +778,31 @@ class TerminalToolbar {
 
 const MAX_CACHE_ENTRIES = 1000;
 
-class MeasureCache {
-    constructor() {
-        this.cache = [];
-    }
-    static hash(fontHeight, fontFamily, text) {
-        return StringExt.padRight(fontFamily, 40, ' ') + fontHeight + text;
-    }
-    add(fontHeight, fontFamily, text, measure) {
-        if (this.cache.length >= MAX_CACHE_ENTRIES) {
-            console.log('MeasureCache - too may entries!');
-            return;
-        }
-        const hash = MeasureCache.hash(fontHeight, fontFamily, text);
-        this.cache[hash] = measure;
-        this.cache.length++;
-    }
-    find(fontHeight, fontFamily, text) {
-        const hash = MeasureCache.hash(fontHeight, fontFamily, text);
-        return this.cache[hash];
-    }
-    clear() {
-        this.cache = [];
-    }
-}
+//class MeasureCache {
+//    constructor() {
+//        this.cache = [];
+//    }
+//    static hash(fontHeight, fontFamily, text) {
+//        return StringExt.padRight(fontFamily, 40, ' ') + fontHeight + text;
+//    }
+//    add(fontHeight, fontFamily, text, measure) {
+//        if (this.cache.length >= MAX_CACHE_ENTRIES) {
+//            console.log('MeasureCache - too may entries!');
+//            return;
+//        }
+//        const hash = MeasureCache.hash(fontHeight, fontFamily, text);
+//        this.cache[hash] = measure;
+//        this.cache.length++;
+//    }
+//    find(fontHeight, fontFamily, text) {
+//        const hash = MeasureCache.hash(fontHeight, fontFamily, text);
+//        return this.cache[hash];
+//    }
+//    clear() {
+//        this.cache = [];
+//    }
+//}
 
-const theMeasureCache = new MeasureCache();
+//const theMeasureCache = new MeasureCache();
 let landscapeDevHeight = NaN;
+let cssVarCache = [];

@@ -32,7 +32,7 @@ body {
 
 .bterm-cursor {
     position: absolute;
-    vertical-align: middle;
+    /*vertical-align: middle;*/
     background-color: #d8d8d8;
     -webkit-appearance: none;
     -webkit-border-radius: 0;
@@ -53,7 +53,8 @@ body {
 
 #AsnaTerm5250 {
     display: grid;
-    margin: 0; 
+    align-items: center;
+    margin: 0;
     border: 0;
     padding: 0;
     overflow: hidden;
