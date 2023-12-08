@@ -1980,12 +1980,15 @@ class Terminal {
 
         this.termCursor.style.top = rect.t + 'px';
         this.termCursor.style.left = rect.l + 'px';
+        let cursorWidth = rect.w;
 
         this.termCursor.style.width = rect.w + 'px';
 
-        //if (!nonChar) {
-        //    this.termCursor.style.width = TerminalDOM.getCharWidth(bkgChar, this.termLayout, TerminalDOM.getGlobalVarValue('--term-font-family')) + 'px'; // Possibly DBCS
-        //}
+        if (!nonChar && DBCS.isChinese(bkgChar)) {
+            cursorWidth *= 2;
+        }
+
+        this.termCursor.style.width = cursorWidth;
 
         const subSectMetr = this.getSubSectionMetrics(this.cursor.row, pos - 1);
 

@@ -88,4 +88,23 @@ class DBCS {
 
         return result;
     }
+
+    static isChinese(char) {
+        return char.codePointAt(0) >= 0x4e00 && char.codePointAt(0) <= 0x9fa5;
+    }
+
+    static hasChinese(text) {
+        for (let i = 0, l = text.length; i < l; i++) {
+            if (DBCS.isChinese(text[i])) { return true; }
+        }
+        return false;
+    }
+
+    static calcDisplayLength(text) {
+        let len = 0;
+        for (let i = 0, l = text.length; i < l; i++) {
+            len += DBCS.isChinese(text[i]) ? 2 : 1;
+        }
+        return len;
+    }
 }
