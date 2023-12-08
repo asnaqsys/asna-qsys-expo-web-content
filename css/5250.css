@@ -32,8 +32,8 @@ body {
 
 .bterm-cursor {
     position: absolute;
-    /*vertical-align: middle;*/
-    background-color: #d8d8d8;
+    outline-style: none;
+    background-color: whitesmoke;
     -webkit-appearance: none;
     -webkit-border-radius: 0;
     border-radius: 0;

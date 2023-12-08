@@ -478,10 +478,23 @@ class TerminalRender {
             return false;
         }
         const divCandidate = candidate.parentElement;
-        if (!divCandidate || divCandidate.tagName.toUpperCase() !== 'DIV') {
+        if (!divCandidate || divCandidate.tagName.toUpperCase() !== 'DIV') { // ??? 
             return false;
         }
         return divCandidate.parentElement === term5250ParentElement;
+    }
+
+    static getTextfromBuffer(regScr, row, pos) {
+        const startRowPos = regScr.coordToPos(row, 0);
+        let text = '';
+        if (pos < startRowPos) {
+            return null;
+        }
+
+        for (let currPos = startRowPos; currPos <= pos; currPos++) {
+            text += regScr.buffer[currPos] !== '\0' ? regScr.buffer[currPos] : ' ';
+        }
+        return { startPos: startRowPos, text: text };
     }
 
 }

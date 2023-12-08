@@ -1978,32 +1978,25 @@ class Terminal {
 
         //this.termCursor.style.backgroundColor = this.settingsStore.state.colors.cursor;
 
-        this.termCursor.style.top = rect.t + 'px';
-        this.termCursor.style.left = rect.l + 'px';
+        this.termCursor.style.top = `${rect.t}px`;
+        this.termCursor.style.left = `${rect.l}px`;
         let cursorWidth = rect.w;
-
-        this.termCursor.style.width = rect.w + 'px';
 
         if (!nonChar && DBCS.isChinese(bkgChar)) {
             cursorWidth *= 2;
         }
 
-        this.termCursor.style.width = cursorWidth;
+        this.termCursor.style.width = `${cursorWidth}px`;
 
-        const subSectMetr = this.getSubSectionMetrics(this.cursor.row, pos - 1);
+        const getTextResult = TerminalRender.getTextfromBuffer(this.regScr, this.cursor.row, pos - 1);
 
-        //if (subSectMetr && subSectMetr.t) { // recalc .left
-        //    const map = new BufferMapping(this.termLayout._5250.cols);
+        if (getTextResult && DBCS.hasChinese(getTextResult.text)) {
+            const dispLen = DBCS.calcDisplayLength(getTextResult.text);
+            const rRow = this.getRect(this.cursor.row, 0, 1, 1);
+            this.termCursor.style.left = `${rRow.l + dispLen * parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'))}px`;
+        }
 
-        //    const lm = this.getRect(this.cursor.row, 0, 1, 1);
-        //    const colOffset = map.colFromPos(subSectMetr.pos);
-        //    const offsetX = colOffset * rect.w;
-        //    const substrW = TerminalDOM.htmlMeasureText(this.termLayout._5250.fontSizePix,TerminalDOM.getGlobalVarValue('--term-font-family'), subSectMetr.t).w;
-
-        //    this.termCursor.style.left = (lm.l + offsetX + substrW) + 'px';
-        //}
-
-        this.termCursor.style.height = rect.h + 'px';
+        this.termCursor.style.height = `${rect.h}px`;
 
         if (nonChar) {
             bkgChar = ' ';
@@ -2044,28 +2037,6 @@ class Terminal {
             w: parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width')) * cols,
             h: parseFloat(TerminalDOM.getGlobalVarValue('--term-row-height')) * rows
         };
-    }
-
-    getSubSectionMetrics(row, pos) {
-        const startRowPos = this.regScr.coordToPos(row, 0);
-        let startPos = NaN;
-        let text = '';
-        if (pos < startRowPos) {
-            return null;
-        }
-
-        for (let currPos = startRowPos; currPos <= pos; currPos++) {
-            if (this.regScr.buffer[currPos] === '\0' && this.regScr.attrMap[currPos].usage === 'o') {
-                text = '';
-            }
-            else {
-                if (!text) {
-                    startPos = currPos;
-                }
-                text += this.regScr.buffer[currPos] !== '\0' ? this.regScr.buffer[currPos] : ' ';
-            }
-        }
-        return { pos: startPos, t: text };
     }
 
     setFocusAtCursor() {
