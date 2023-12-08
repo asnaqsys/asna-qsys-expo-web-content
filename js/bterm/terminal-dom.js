@@ -555,7 +555,7 @@ class TerminalDOM {
             }
         }
 
-        _5250Cursor.cursor.w = gridColWidth; // TO-DO: remove cursor.w --     parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
+        // _5250Cursor.cursor.w = gridColWidth; // TO-DO: remove cursor.w --     parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
     }
 
     static getGridElementClientRight(gridEl) {

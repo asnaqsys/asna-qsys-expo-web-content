@@ -379,11 +379,14 @@ class Screen {
                     continue;
                 }
 
-                const l = this.mapping.colFromPos(pos) * termLayout._5250.cursor.w;
-                const r = this.mapping.colFromPos(pos + 2 + digits) * termLayout._5250.cursor.w;
-                const t = (this.mapping.rowFromPos(pos) * termLayout._5250.cursor.h) + (TerminalRender.calcTextVertPadding(termLayout) / 2); // Assumes no vert offset.
-                const w = matchLen * termLayout._5250.cursor.w;
-                const h = termLayout._5250.cursor.h;
+                const cw = parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
+                const ch = parseFloat(TerminalDOM.getGlobalVarValue('--term-row-height'));
+
+                const l = this.mapping.colFromPos(pos) * cw;
+                const r = this.mapping.colFromPos(pos + 2 + digits) * cw;
+                const t = (this.mapping.rowFromPos(pos) * ch) + (TerminalRender.calcTextVertPadding(termLayout) / 2); // Assumes no vert offset.
+                const w = matchLen * cw;
+                const h = ch;
 
                 result.push({ 'box': { 'l': l, 't': t, 'r': r, 'w': w, 'h': h }, 'label': label, 'action': 'F' + f });
 

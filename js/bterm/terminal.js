@@ -118,7 +118,7 @@ class Terminal {
 
                 this.termLayout = {
                     w: NaN, h: NaN,
-                    _5250: { l: NaN, t: NaN, w: NaN, h: NaN, rows: NaN, cols: NaN, msgLight: false, fontSizePix: NaN, cursor: { w: NaN, h: NaN } },
+                    _5250: { l: NaN, t: NaN, w: NaN, h: NaN, rows: NaN, cols: NaN, msgLight: false, fontSizePix: NaN, cursor: {} },
                     status: { l: NaN, t: NaN, w: NaN, h: NaN }
                 };
 
@@ -588,12 +588,6 @@ class Terminal {
             this.termLayout.status.h = rowHeightPix;
 
             let rowCellWidth = this.termLayout.w / this.termLayout._5250.cols;
-
-            this.termLayout._5250.w = rowCellWidth * this.termLayout._5250.cols;
-            this.termLayout._5250.h = rowHeightPix * this.termLayout._5250.rows;
-
-            //  this.termLayout._5250.cursor.w = rowCellWidth;
-            this.termLayout._5250.cursor.h = rowHeightPix;
 
             this.termLayout._5250.fontSizePix = rowHeightPix - this.calcLineWidth(rowHeightPix); // font-size is adjusted later, by measuring width.
             this.termLayout._5250.t = 0;
@@ -1951,12 +1945,12 @@ class Terminal {
 
         AsnaTermFacade.style.height = this.termLayout.h + 'px';
 
-        if (!isNaN(this.termLayout._5250.cols) && !isNaN(this.termLayout._5250.cursor.w)) {
+        if (!isNaN(this.termLayout._5250.cols) /*&& !isNaN(this.termLayout._5250.cursor.w)*/) {
             this.termLayout._5250.l = 0; // ???
             this.termLayout._5250.t = 0;
 
-            this.termLayout._5250.w = /*this.termLayout._5250.cursor.w*/ TerminalDOM.getGlobalVarValue('--term-col-width') * this.termLayout._5250.cols;
-            this.termLayout._5250.h = /*this.termLayout._5250.cursor.h*/ TerminalDOM.getGlobalVarValue('--term-row-height') * this.termLayout._5250.rows;
+            this.termLayout._5250.w = TerminalDOM.getGlobalVarValue('--term-col-width') * this.termLayout._5250.cols;
+            this.termLayout._5250.h = TerminalDOM.getGlobalVarValue('--term-row-height') * this.termLayout._5250.rows;
 
             //this.AsnaTerm5250.style.width = this.termLayout._5250.w + 'px';
             //this.AsnaTerm5250.style.height = this.termLayout._5250.h + 'px';
@@ -2016,20 +2010,6 @@ class Terminal {
     }
 
     getRect(row, col, rows, cols) {
-        /*
-        const vertPadding = TerminalRender.calcTextVertPadding(this.termLayout);
-        const height = this.termLayout._5250.cursor.h - vertPadding + CHAR_MEASURE.UNDERSCORE_CHAR_HEIGHT;
-        const top = this.termLayout._5250.t + BufferMapping.rowToPixel(row, this.termLayout) + vertPadding;
-        let rH = height * rows;
-
-        if (rows > 1) { // Rows are not adjacent.
-            const top2 = this.termLayout._5250.t + BufferMapping.rowToPixel(row + (rows - 1), this.termLayout) + vertPadding;
-            rH = top2 + height - top;
-        }
-
-        return { l: this.termLayout._5250.l + BufferMapping.colToPixel(col, this.termLayout), t: top, w: this.termLayout._5250.cursor.w * cols, h: rH };
-        */
-
         const rTerm = this.AsnaTerm5250.getBoundingClientRect();
         return {
             l: rTerm.x + BufferMapping.colToPixel(col, this.termLayout),
