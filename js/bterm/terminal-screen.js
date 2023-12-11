@@ -7,12 +7,11 @@
 
 export { Screen, ScreenAttr, ScreenAttrEntry, RowCol, Field, FieldFormatWord, AdjustFill, ShiftEditSpec, InputArea};
 
-/*eslint-disable*/
 import { QSN_SA } from './ibm-codes.js';
 import { BufferMapping } from './buffer-mapping.js';
 import { Validate } from './terminal-validate.js';
 import { TerminalRender } from './terminal-render.js';
-/*eslint-enable*/
+import { TerminalDOM } from './terminal-dom.js';
 
 // const _debug = true; // Comment line for production !!!
 
