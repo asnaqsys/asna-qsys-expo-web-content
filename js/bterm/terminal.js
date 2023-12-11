@@ -558,7 +558,7 @@ class Terminal {
 
             let rowCellWidth = this.termLayout.w / this.termLayout._5250.cols;
 
-            this.termLayout._5250.fontSizePix = rowHeightPix - this.calcLineWidth(rowHeightPix); // font-size is adjusted later, by measuring width.
+            // this.termLayout._5250.fontSizePix = rowHeightPix - this.calcLineWidth(rowHeightPix); // font-size is adjusted later, by measuring width.
             this.termLayout._5250.t = 0;
 
             this.termLayout.status.l = 0;
@@ -2844,10 +2844,6 @@ class Terminal {
 
         const pt = this.textSelect.clientPt(this.AsnaTerm5250, event);
 
-        // if (id != ASNA.TEConst.MOUSE_POINTER_ID) {
-        //    ASNA.FingerSwipe.PointerEnd();
-        // }
-
         if (this.textSelect.mode === TEXT_SELECT_MODES.IN_PROGRESS) {
             this.textSelect.setComplete();
             this.cursor.show();
@@ -2855,7 +2851,11 @@ class Terminal {
             this.activateInput();
         }
         else { // Just move the position to where the mouse is located.
-            const selectedCursorPos = TextSelect.getRowColFromPixel(this.termLayout._5250.cursor, pt);
+            const cursorDim = {
+                w: parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width')),
+                h: parseFloat(TerminalDOM.getGlobalVarValue('--term-row-height'))
+            };
+            const selectedCursorPos = TextSelect.getRowColFromPixel(cursorDim, pt);
             this.textSelect.reset();
             if (Settings.close()) {
                 this.cursorKeyboardEventHandlingOperations('add');

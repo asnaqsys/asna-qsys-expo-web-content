@@ -222,8 +222,9 @@ class TerminalDOM {
         return true; // !is_iPad;
     }
 
-    static getCharWidth(char, termLayout, fontFamily ) {
-        return TerminalDOM.htmlMeasureText(termLayout._5250.fontSizePix, fontFamily, char).w;
+    static getCharWidth(char, termLayout, fontFamily) {
+        const fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
+        return TerminalDOM.htmlMeasureText(fontSize, fontFamily, char).w;
     }
 
     static alignInputText(input, height, fSize) {
