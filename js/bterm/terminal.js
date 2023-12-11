@@ -313,31 +313,22 @@ class Terminal {
     }
 
     render(arg) {
-    /*eslint-disable*/
-        if (false /* ASNA.Vendor.IsMobile() || ASNA.Vendor.IsWin8Touch() */) {
-            this.setScreenSize(24, 80, false);
-            this.resizeFcnt = function () { return { width: this.termLayout.w, height: this.termLayout.h }; };
+        if (typeof arg === 'function') {
+            this.resizeFcnt = arg;
         }
-        /*eslint-enable*/
-        else {
-            if (typeof arg === 'function') {
-                this.resizeFcnt = arg;
-            }
-            else if (typeof arg === 'object') {
-                if (typeof arg.width === 'undefined' || typeof arg.height === 'undefined') {
-                    alert('Terminal.Render(parameter error)');
-                    return;
-                }
-                this.resizeFcnt = function () { return { width: arg.width, height: arg.height }; };
-            }
-            else {
+        else if (typeof arg === 'object') {
+            if (typeof arg.width === 'undefined' || typeof arg.height === 'undefined') {
                 alert('Terminal.Render(parameter error)');
                 return;
             }
+            this.resizeFcnt = function () { return { width: arg.width, height: arg.height }; };
+        }
+        else {
+            alert('Terminal.Render(parameter error)');
+            return;
         }
 
         this.DOM = new TerminalDOM();
-        // this.DOM.findPreFontFamily();
         if (!this.DOM.isValidMonospace(TerminalDOM.getGlobalVarValue('--term-font-family')))
             TerminalDOM.setGlobalVar('--term-font-family', 'Consolas, monospace;');
 
@@ -351,11 +342,8 @@ class Terminal {
 
         this.eventHandlingOperations('add');
 
-        if (true /* !ASNA.Vendor.IsMobile() */) {
-            TerminalRender.clearCanvas(this.AsnaTerm5250);
-        }
+        TerminalRender.clearCanvas(this.AsnaTerm5250);
 
-        // this.init();
         this.updateChromeColors(this.settingsStore.state.colors);
         this.initTerminal();
 
@@ -373,9 +361,6 @@ class Terminal {
 
         this.toolbar = new TerminalToolbar();
         this.toolbar.create(this.termLayout, fontFamily, this.settingsStore.state.colors);
-        if (false /*ASNA.Vendor.IsMobile() || ASNA.Vendor.IsWin8Touch()*/) {
-            // ASNA.TouchableInput.Create(AsnaTerm5250, formatTable, fieldCount, termLayout, calcTextVertPadding(), CHAR_MEASURE.UNDERSCORE_CHAR_HEIGHT);
-        }
 
         new TerminalRender(this.termLayout, this.settingsStore.state.colors, fontFamily, this.regScr, this.dataSet, this.AsnaTerm5250).render();
         if (Keyboard.state === KEYBOARD_STATE.ERROR) {
@@ -384,9 +369,6 @@ class Terminal {
 
         this.enterBigButton = new ActionButton(ID.ENTER_BIG_BUTTON, this.settingsStore, this.executeVirtualKey, 'ENTER');
         this.enterBigButton.init(Labels.get('KPAD_ENTER'), this.termLayout);
-        if (false /*ASNA.Vendor.IsMobile() || ASNA.Vendor.IsWin8Touch()*/) {
-            this.enterBigButton.showIfEnabled();
-        }
 
         this.resetBigButton = new ActionButton(ID.RESET_BIG_BUTTON, this.settingsStore, this.executeVirtualKey, 'RESET');
         this.resetBigButton.init(Labels.get('KPAD_RESET'), this.termLayout);
@@ -408,24 +390,11 @@ class Terminal {
         // !!! FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(this.termLayout), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
 
         Settings.init(ID.STATUSBAR, SETTINGS_OPENING_HEIGHT, this.settingsStore);
-/*
-        if (ASNA.Vendor.IsMobile() || ASNA.Vendor.IsWin8Touch()) {
-            _adjustForOrientation();
-        }
-*/
         IbmKeypad.initialLocation(this.termLayout, this.settingsStore.state.locations.ibmKeypad);
         if (this.settingsStore.state.show.ibmKeypad) {
             IbmKeypad.show();
         }
-        /*
-        if (ASNA.Vendor.DidNotResizeAfterRemovingKeyboard(termLayout._5250.h)) {
-            setTimeout(function () { rebuildPage(); _notifyUserCode(); }, 2000);
-        }
-        else {*/
-            this.pageReplacedNotifyUserCode();
-/*
-        }
-*/
+        this.pageReplacedNotifyUserCode();
     }
 
     renderStatusBar() {
@@ -597,7 +566,6 @@ class Terminal {
 
             TerminalDOM.setGlobalVar('--term-col-width', `${rowCellWidth}px`);
             TerminalDOM.setGlobalVar('--term-row-height', `${rowHeightPix}px`);
-            TerminalDOM.setGlobalVar('--term-font-size', `${rowHeightPix}px`); // Start with font equal to row-height
         }
     }
 
@@ -1827,6 +1795,7 @@ class Terminal {
             this.setScreenSize(newSize.rows, newSize.cols, newSize.msgLight);
             this.initTerminal(newSize.msgLight);
         }
+        this.DOM.setTerminalFont();
 
         this.regScr.loadBuffer(stream.regenerationBuffer);
         this.regScr.loadAttributes(stream.regenBufferAttributes);
@@ -2674,21 +2643,17 @@ class Terminal {
     }
 
     rebuildPage() {
-        // TerminalDOM.clearCache();
         this.textSelect.reset();
         TerminalRender.clearCanvas(this.AsnaTerm5250);
         this.toolbar.removeToolbars();
 
         this.hideMsgIndicator();
         FKeyHotspot.remove();
-        //if (ASNA.Vendor.IsMobile()) {
-        //    ASNA.TouchableInput.Remove();
-        //}
         // ASNA.IbmKpad.Remove();
 
         this.adjustCanvasSize();
         this.setScreenSize(this.termLayout._5250.rows, this.termLayout._5250.cols, this.termLayout._5250.msgLight);
-        this.DOM.setTerminalFont(this.termLayout._5250);
+        this.DOM.setTerminalFont();
         this.toolbar = new TerminalToolbar();
         this.toolbar.create(this.termLayout, TerminalDOM.getGlobalVarValue('--term-font-family'), this.settingsStore.state.colors);
 
@@ -2706,11 +2671,6 @@ class Terminal {
         if (this.resetBigButton) {
             this.resetBigButton.calcLocation(this.termLayout);
         }
-        /*
-        if (ASNA.Vendor.IsMobile() || ASNA.Vendor.IsWin8Touch()) {
-            ASNA.TouchableInput.Create(AsnaTerm5250, formatTable, fieldCount, termLayout, calcTextVertPadding(), underScoreCharHeight);
-        }
-        */
     }
 
     isReqFieldExitFld(fld) {

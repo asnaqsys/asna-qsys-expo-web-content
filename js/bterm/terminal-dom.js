@@ -515,11 +515,11 @@ class TerminalDOM {
         return str;
     }
 
-    setTerminalFont(_5250Cursor) {
+    setTerminalFont() {
         const gridColWidth = parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
         const t5250 = document.getElementById('AsnaTerm5250');
 
-        if (t5250) {
+        if (t5250 && !isNaN(gridColWidth) && gridColWidth > 0.0) {
             const fontFamily = TerminalDOM.getGlobalVarValue('--term-font-family');
             const cachedFontSize = theFontSizeCache.get(fontFamily, gridColWidth);
 
@@ -539,6 +539,14 @@ class TerminalDOM {
                 const leftPadM = ' '.repeat(78) + 'M';
                 let mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
                 let ra = TerminalDOM.getGridElementClientRight(a);
+
+                if (mb.h > fontSize) { // The CSS value is too small ...
+                    fontSize = mb.h;
+                    TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
+                    mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
+                    ra = TerminalDOM.getGridElementClientRight(a);
+                }
+
                 const t0 = performance.now();
                 let t1 = t0;
 
