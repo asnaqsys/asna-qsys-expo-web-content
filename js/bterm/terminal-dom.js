@@ -218,10 +218,6 @@ class TerminalDOM {
         return Math.ceil(height * reduction); // Note: pixels.
     }
 
-    static lineHeightCentersVertically() {
-        return true; // !is_iPad;
-    }
-
     static getCharWidth(char, termLayout, fontFamily) {
         const fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
         return TerminalDOM.htmlMeasureText(fontSize, fontFamily, char).w;
@@ -770,9 +766,6 @@ class TerminalToolbar {
         child.style.top = top;
         child.style.width = width;
         child.style.height = height;
-        if (TerminalDOM.lineHeightCentersVertically()) {
-            child.style.lineHeight = height;
-        }
         child.style.fontSize = this.toolbarFontSizePix + 'px';
         child.style.overflow = 'hidden';
         child.style.backgroundColor = 'transparent';

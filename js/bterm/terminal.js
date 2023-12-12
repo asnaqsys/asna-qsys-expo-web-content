@@ -357,7 +357,6 @@ class Terminal {
         this.newPageCursorInit();
 
         const fontFamily = TerminalDOM.getGlobalVarValue('--term-font-family');
-        this.DBCS = new DBCS(this.termLayout, fontFamily);
 
         this.toolbar = new TerminalToolbar();
         this.toolbar.create(this.termLayout, fontFamily, this.settingsStore.state.colors);
@@ -558,10 +557,8 @@ class Terminal {
 
             let rowCellWidth = this.termLayout.w / this.termLayout._5250.cols;
 
-            // this.termLayout._5250.fontSizePix = rowHeightPix - this.calcLineWidth(rowHeightPix); // font-size is adjusted later, by measuring width.
-            this.termLayout._5250.t = 0;
-
             this.termLayout.status.l = 0;
+            this.termLayout._5250.t = 0;
             this.termLayout.status.t = this.termLayout.h - this.termLayout.status.h;
 
             TerminalDOM.setGlobalVar('--term-col-width', `${rowCellWidth}px`);
@@ -1525,7 +1522,7 @@ class Terminal {
             let fldVal = this.dataSet.getFieldValue(fld);
 
             if (fld.dbcsType !== 'n') {
-                fldVal = this.DBCS.formatFieldValue(fldVal, fld.len, fld.dbcsType);
+                fldVal = DBCS.formatFieldValue(fldVal, fld.dbcsType);
             }
 
             if (runMandatoryValidation) {
@@ -2140,22 +2137,21 @@ class Terminal {
             dbcsType = sa.field.dbcsType;
 
             if (dbcsType === DBCS_TYPES.J || dbcsType === DBCS_TYPES.G) {
-                if (!this.DBCS.isWide(character)) {
+                if (!DBCS.isChinese(character)) {
                     this.setPreHelpError('0060');
                     return;
                 }
             }
             else if (dbcsType === 'n') {
-                if (this.DBCS.isWide(character)) {
+                if (DBCS.isChinese(character)) {
                     this.setPreHelpError('0061');
                     return;
                 }
             }
 
             if (dbcsType === DBCS_TYPES.E) {
-                const isWide = this.DBCS.isWide(character);
-                if (!this.isValidECharForFld(character, isWide, sa.field)) {
-                    this.setPreHelpError(_isDBCS(charW) ? '0061' : '0060');
+                if (!this.isValidECharForFld(DBCS.isChinese(character), sa.field)) {
+                    this.setPreHelpError(DBCS.isChinese(character) ? '0061' : '0060');
                     return;
                 }
             }
@@ -2221,15 +2217,15 @@ class Terminal {
         }
         else {
             if (this.regScr.buffer[pos] !== '\0') {
-                if (this.DBCS.isWide(character) && !this.DBCS.isWide(this.regScr.buffer[pos])) { // DBCS replaces 2 SBCS
+                if (DBCS.isChinese(character) && !DBCS.isChinese(this.regScr.buffer[pos])) { // DBCS replaces 2 SBCS
                     this.doDelete();
                 }
             }
         }
 
         this.writeTextAtCursor(character);
-        if (dbcsType !== 'n' && this.DBCS.isWide(character))
-            this.checkTruncateField(sa.field);
+        //if (dbcsType !== 'n' && DBCS.isChinese(character))
+        //    this.checkTruncateField(sa.field);
 
         let atDbcsEnd;
         if (autoEnter && this.isLastFieldPos(pos)) {
@@ -2275,7 +2271,7 @@ class Terminal {
         return Screen.isRowColInInputPos(this.regScr, this.cursor.row, this.cursor.col);
     }
     
-    isValidECharForFld(c, isWide, fld) {
+    isValidECharForFld(isWide, fld) {
         const fromPos = this.regScr.coordToPos(fld.row, fld.col);
         const value = Screen.copyPositionsFromBuffer(this.regScr, fromPos, fromPos + fld.len);
         value = value.trim();
@@ -2284,7 +2280,7 @@ class Terminal {
             return true;
         }
 
-        if (this.DBCS.isWide(value[0])) {
+        if (DBCS.isChinese(value[0])) {
             return isWide;
         } else {
             return !isWide;
@@ -2366,7 +2362,7 @@ class Terminal {
         const dbcsType = sa.field.dbcsType;
 
         if (dbcsType !== 'n' && dbcsType !== DBCS_TYPES.G) {
-            const isWide = DBCS.isWide(c);
+            const isWide = DBCS.isChinese(c);
             if (dbcsType === DBCS_TYPES.J && !isWide || (dbcsType === DBCS_TYPES.E && !this.isValidECharForFld(c, isWide, sa.field))) {
                 return false;
             }
@@ -2462,31 +2458,31 @@ class Terminal {
         return index;
     }
 
-    checkTruncateField(fld) {
-        const value = this.dataSet.getFieldValue(fld);
-        const byM = this.DBCS.calcByteLen(value);
-        var mod = false;
+    //checkTruncateField(fld) {
+    //    const value = this.dataSet.getFieldValue(fld);
+    //    const byM = this.DBCS.calcByteLen(value);
+    //    var mod = false;
 
-        while (byM.bytes > fld.len && value.length > 0) {
-            mod = true;
-            value = value.substring(0, value.length - 1);
-            byM = this.DBCS.calcByteLen(value);
-        }
+    //    while (byM.bytes > fld.len && value.length > 0) {
+    //        mod = true;
+    //        value = value.substring(0, value.length - 1);
+    //        byM = this.DBCS.calcByteLen(value);
+    //    }
 
-        if (mod) {
-            // console.log('Need to truncate! old:' + temp + ' new:' + value);
+    //    if (mod) {
+    //        // console.log('Need to truncate! old:' + temp + ' new:' + value);
 
-            this.dataSet.setFieldValue(fld, value);
-            const pos = this.regScr.coordToPos(fld.row, fld.col);
-            new TerminalRender(
-                this.termLayout,
-                this.settingsStore.state.colors,
-                TerminalDOM.getGlobalVarValue('--term-font-family'),
-                this.regScr,
-                this.dataSet,
-                this.AsnaTerm5250).renderInputCanvasSections(this.AsnaTerm5250, pos, pos + fld.len);
-        }
-    }
+    //        this.dataSet.setFieldValue(fld, value);
+    //        const pos = this.regScr.coordToPos(fld.row, fld.col);
+    //        new TerminalRender(
+    //            this.termLayout,
+    //            this.settingsStore.state.colors,
+    //            TerminalDOM.getGlobalVarValue('--term-font-family'),
+    //            this.regScr,
+    //            this.dataSet,
+    //            this.AsnaTerm5250).renderInputCanvasSections(this.AsnaTerm5250, pos, pos + fld.len);
+    //    }
+    //}
 
     isLastFieldPos(pos) {
         const fieldEndPos = this.regScr.peekOnePastEndOfFieldPos(pos);
@@ -2509,14 +2505,15 @@ class Terminal {
             return true;
         }
 
-        pos -= startFldPos;
-        const byM = calcByteLenDbcs(value, pos);
+        return false;
+        //pos -= startFldPos;
+        //const byM = calcByteLenDbcs(value, pos);
 
-        if (byM.lastState === 'd' && byM.bytes === fld.len - 1) { // + SI
-            return true;
-        }
+        //if (byM.lastState === 'd' && byM.bytes === fld.len - 1) { // + SI
+        //    return true;
+        //}
 
-        return byM.bytes >= fld.len; // Regardless of dbcs type ???
+        //return byM.bytes >= fld.len; // Regardless of dbcs type ???
     }
 
     moveToNextInputArea(row, col) {
