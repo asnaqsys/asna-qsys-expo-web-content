@@ -315,7 +315,7 @@ class Screen {
         return -1;
     }
 
-    hotspotScan(termLayout) {
+    hotspotScan() {
         let result = [];
 
         for (let pos = 0; pos < this.buffer.length; pos++) {
@@ -383,7 +383,7 @@ class Screen {
 
                 const l = this.mapping.colFromPos(pos) * cw;
                 const r = this.mapping.colFromPos(pos + 2 + digits) * cw;
-                const t = (this.mapping.rowFromPos(pos) * ch) + (TerminalRender.calcTextVertPadding(termLayout) / 2); // Assumes no vert offset.
+                const t = this.mapping.rowFromPos(pos) * ch;
                 const w = matchLen * cw;
                 const h = ch;
 

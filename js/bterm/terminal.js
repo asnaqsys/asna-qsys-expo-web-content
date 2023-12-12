@@ -387,7 +387,7 @@ class Terminal {
 */
         IbmKeypad.init(this.AsnaTermFacade, this.termLayout, this.executeVirtualKey, this.actionMap, this.settingsStore);
 
-        FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(this.termLayout), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
+        FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
 
         Settings.init(ID.STATUSBAR, SETTINGS_OPENING_HEIGHT, this.settingsStore);
         IbmKeypad.initialLocation(this.termLayout, this.settingsStore.state.locations.ibmKeypad);
@@ -2664,7 +2664,7 @@ class Terminal {
 
         this.adjust_5250Div();
         Settings.init(ID.STATUSBAR, SETTINGS_OPENING_HEIGHT, this.settingsStore );
-        FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(this.termLayout), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
+        FKeyHotspot.init(this.AsnaTerm5250, this.regScr.hotspotScan(), this.executeVirtualKey, this.settingsStore.state.show.functionKeyHotspots);
         if (this.enterBigButton) {
             this.enterBigButton.calcLocation(this.termLayout);
         }
