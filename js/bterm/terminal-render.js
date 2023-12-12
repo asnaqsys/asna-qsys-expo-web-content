@@ -376,16 +376,6 @@ class TerminalRender {
         );
     }
 
-    static calcTextVertPadding(termLayout) {
-        //const rowLeadHeight = parseFloat(TerminalDOM.getGlobalVarValue('--term-row-height')) - CHAR_MEASURE.UNDERLINE_HEIGHT - CHAR_MEASURE.UNDERSCORE_CHAR_HEIGHT;
-
-        //if (rowLeadHeight > termLayout._5250.fontSizePix) {
-        //    return rowLeadHeight - termLayout._5250.fontSizePix;
-        //}
-
-        return 0;
-    }
-
     static setDivText(divEl, text, preFontFamily, instTesting) {
         const pre = document.createElement('pre');
         if (instTesting) {

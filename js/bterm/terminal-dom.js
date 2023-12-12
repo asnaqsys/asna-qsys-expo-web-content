@@ -528,43 +528,47 @@ class TerminalDOM {
                 TerminalDOM.setGlobalVar('--term-font-size', `${cachedFontSize}px`);
             }
             else {
-                let fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
+                return new Promise((resolve) => {
+                    t5250.style.cursor = 'wait';
+                    let fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
 
-                const a = document.createElement('pre');
-                a.className = 'bterm-render-section';
-                a.style.gridColumnStart = 79;               // !!! change to 132 when display indicates.
-                a.style.gridColumnEnd = 80;
-                a.textContent = 'M';
-                t5250.appendChild(a);
+                    const a = document.createElement('pre');
+                    a.className = 'bterm-render-section';
+                    a.style.gridColumnStart = 79;               
+                    a.style.gridColumnEnd = 80;
+                    a.textContent = 'M';
+                    t5250.appendChild(a);
 
-                const leftPadM = ' '.repeat(78) + 'M';
-                let mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
-                let ra = TerminalDOM.getGridElementClientRight(a);
+                    const leftPadM = ' '.repeat(78) + 'M';
+                    let mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
+                    let ra = TerminalDOM.getGridElementClientRight(a);
 
-                if (mb.h > fontSize) { // The CSS value is too small ...
-                    fontSize = mb.h;
-                    TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
-                    mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
-                    ra = TerminalDOM.getGridElementClientRight(a);
-                }
+                    if (mb.h > fontSize) { // The CSS value is too small ...
+                        fontSize = mb.h;
+                        TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
+                        mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
+                        ra = TerminalDOM.getGridElementClientRight(a);
+                    }
 
-                const t0 = performance.now();
-                let t1 = t0;
+                    const t0 = performance.now();
+                    let t1 = t0;
 
-                while (mb.w > ra && fontSize > 5.0 && (t1 - t0) < (10 * 1000)) {
-                    fontSize -= 0.001;
-                    TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
-                    ra = TerminalDOM.getGridElementClientRight(a);
-                    mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
-                    t1 = performance.now();
-                }
+                    while (mb.w > ra && fontSize > 5.0 && (t1 - t0) < (10 * 1000)) {
+                        fontSize -= 0.001;
+                        TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
+                        ra = TerminalDOM.getGridElementClientRight(a);
+                        mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
+                        t1 = performance.now();
+                    }
 
-                t5250.removeChild(a);
-                theFontSizeCache.save(fontFamily, gridColWidth, fontSize);
+                    t5250.removeChild(a);
+                    theFontSizeCache.save(fontFamily, gridColWidth, fontSize);
+                    t5250.style.cursor = 'auto';
+
+                    resolve();
+                });
             }
         }
-
-        // _5250Cursor.cursor.w = gridColWidth; // TO-DO: remove cursor.w --     parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
     }
 
     static getGridElementClientRight(gridEl) {
