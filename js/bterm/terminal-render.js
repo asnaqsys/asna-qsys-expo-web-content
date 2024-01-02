@@ -467,11 +467,7 @@ class TerminalRender {
         if (!candidate || candidate.tagName.toUpperCase() !== 'PRE') {
             return false;
         }
-        const divCandidate = candidate.parentElement;
-        if (!divCandidate || divCandidate.tagName.toUpperCase() !== 'DIV') { // ??? 
-            return false;
-        }
-        return divCandidate.parentElement === term5250ParentElement;
+        return candidate.parentElement === term5250ParentElement;
     }
 
     static getTextfromBuffer(regScr, row, pos) {
