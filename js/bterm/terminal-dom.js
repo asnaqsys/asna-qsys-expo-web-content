@@ -13,6 +13,8 @@ import { Validate } from './terminal-validate.js';
 import { StringExt } from '../string.js';
 import { KEYBOARD_STATE } from './terminal-keyboard.js';
 
+const _debug = false;
+
 // HTML IDs
 const ID = {
     CURSOR: 'AsnaTermCursor',
@@ -791,36 +793,6 @@ class TerminalToolbar {
     }
 }
 
-
-//class MeasureCache {
-//    constructor() {
-//        this.cache = [];
-//    }
-//    static hash(fontHeight, fontFamily, text) {
-//        return StringExt.padRight(fontFamily, 40, ' ') + fontHeight + text;
-//    }
-//    add(fontHeight, fontFamily, text, measure) {
-//        if (this.cache.length >= MAX_CACHE_ENTRIES) {
-//            console.log('MeasureCache - too may entries!');
-//            return;
-//        }
-//        const hash = MeasureCache.hash(fontHeight, fontFamily, text);
-//        this.cache[hash] = measure;
-//        this.cache.length++;
-//    }
-//    find(fontHeight, fontFamily, text) {
-//        const hash = MeasureCache.hash(fontHeight, fontFamily, text);
-//        return this.cache[hash];
-//    }
-//    clear() {
-//        this.cache = [];
-//    }
-//}
-
-//const theMeasureCache = new MeasureCache();
-
-// const MAX_CACHE_ENTRIES = 1000;
-
 class FontSizeCache {
     constructor() {
         this.byFontFamily = [];
@@ -828,12 +800,13 @@ class FontSizeCache {
 
     save(fontFamily, gridColWidth, fontSize) {
         let byWidth = [];
-        if (!this.byFontFamily[fontFamily]) {
-            this.byFontFamily[fontFamily] = byWidth;
+        const key = FontSizeCache.keyHash(fontFamily);
+        if (!this.byFontFamily[key]) {
+            this.byFontFamily[key] = byWidth;
             this.byFontFamily.length++;
         }
         else {
-            byWidth = this.byFontFamily[fontFamily];
+            byWidth = this.byFontFamily[key];
         }
 
         const widthHash = FontSizeCache.fixFloat(gridColWidth);
@@ -843,9 +816,37 @@ class FontSizeCache {
     }
 
     get(fontFamily, gridColWidth) {
-        if (!this.byFontFamily[fontFamily]) { return null; }
+        const fontFamilyKey = FontSizeCache.keyHash(fontFamily);
+        const colWidthKey = FontSizeCache.fixFloat(gridColWidth);
 
-        return this.byFontFamily[fontFamily][FontSizeCache.fixFloat(gridColWidth)];
+        if (_debug) {
+            console.log(`Req fontSize for: ${fontFamilyKey} colW:${colWidthKey}`);
+        }
+
+        if (!this.byFontFamily[fontFamilyKey]) {
+            if (_debug) { console.log('** Empty cache!');  }
+            return null;
+        }
+
+        const result = this.byFontFamily[fontFamilyKey][colWidthKey];
+
+        if (_debug) {
+            if (result) {
+                console.log(`Found ${result} for: ${fontFamilyKey} colW:${colWidthKey}`);
+            }
+            //else {
+            //    console.log('Cache Dump:');
+            //    console.log(this.byFontFamily[fontFamilyKey]);
+            //}
+        }
+
+        return result;
+    }
+
+    static keyHash(fontFamily) {
+        let noCommas = fontFamily.replaceAll(',', '_');
+        let noSpaces = noCommas.replaceAll(' ', '_');
+        return noSpaces;
     }
 
     static fixFloat(num) {
