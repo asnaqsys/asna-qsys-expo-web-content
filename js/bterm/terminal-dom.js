@@ -14,6 +14,8 @@ import { StringExt } from '../string.js';
 import { KEYBOARD_STATE } from './terminal-keyboard.js';
 
 const _debug = false;
+const _debug2 = false;
+const FONT_SIZE_TRY_INCREMENT = 0.01;
 
 // HTML IDs
 const ID = {
@@ -101,15 +103,9 @@ const CHAR_MEASURE = {
     UNDERSCORE_CHAR_HEIGHT: 1
 };
 
-// const SAMPLE_ONE = 'M';
-// const SAMPLE_44 = 'MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM'; // 44 characters
 const MAX_COORD_STR = '99,999';
 
 class TerminalDOM {
-    constructor() {
-        // this.preFontFamily = '';  // !!! Remove -- we have it in a global var now 
-        // this.sample132 = SAMPLE_44 + SAMPLE_44 + SAMPLE_44;
-    }
 
     static resetBoxStyle(style) {
         style.margin = '0px';
@@ -276,10 +272,6 @@ class TerminalDOM {
             }
         }
     }
-
-    //static clearCache() {
-    //    theMeasureCache.clear();
-    //}
 
     static getViewportDim(landscape) {
         let w = window.screen.availWidth;
@@ -550,13 +542,15 @@ class TerminalDOM {
 
                     const t0 = performance.now();
                     let t1 = t0;
+                    let iterations = 0;
 
                     while (mb.w > ra && fontSize > 5.0 && (t1 - t0) < (10 * 1000)) {
-                        fontSize -= 0.001;
+                        fontSize -= FONT_SIZE_TRY_INCREMENT;
                         TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
                         ra = TerminalDOM.getGridElementClientRight(a);
                         mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
                         t1 = performance.now();
+                        iterations++;
                     }
 
                     t5250.removeChild(a);
@@ -564,6 +558,7 @@ class TerminalDOM {
                     t5250.style.cursor = 'auto';
 
                     resolve();
+                    if (_debug2) { console.log(`iterations:${iterations}`); }
                 });
             }
         }
@@ -606,13 +601,11 @@ class TerminalToolbar {
         this.sBarErrMsgEl = null;
 
         this.toolbarFontSizePix = 0;
-        // this.preFontFamily = '';
         this.designTimeStatusbarHtml = '';
     }
 
     create(termLayout, fontFamily, termColors) {
         this.toolbarFontSizePix = TerminalDOM.fontSizeForHeight(termLayout.status.h);
-        // this.preFontFamily = fontFamily;
 
         this.statusBar = document.getElementById(ID.STATUSBAR);
         if (!statusbar) { return; }
@@ -620,7 +613,6 @@ class TerminalToolbar {
         this.designTimeStatusbarHtml = this.statusBar.innerHTML;
 
         const oneChar = 'M';
-        // const oneBlank = ' ';
         const gapToolbarItemsWidth = TerminalDOM.htmlMeasureText(this.toolbarFontSizePix, fontFamily, oneChar).w;
 
         this.statusBar.style.left = '0px';
