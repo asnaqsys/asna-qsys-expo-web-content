@@ -9,7 +9,7 @@ export { TerminalRender };
 
 import { Screen, ScreenAttr, Field  } from './terminal-screen.js';
 import { BufferMapping } from './buffer-mapping.js'
-import { CHAR_MEASURE, TerminalDOM } from './terminal-dom.js';
+import { CHAR_MEASURE } from './terminal-dom.js';
 import { StringExt } from '../string.js';
 import { DBCS } from './terminal-dbcs.js';
 
@@ -20,7 +20,6 @@ const State = {
     SWITCH_CHARSET: '+d',
     COUNT_SAME_CHARSET: '=d'
 }
-const _debug = false;
 
 class TerminalRender {
     constructor(termLayout, termColors, preFontFamily, regScr, dataSet, term5250ParentElement) {
@@ -30,6 +29,7 @@ class TerminalRender {
         this.regScr = regScr;
         this.dataSet = dataSet;
         this.term5250ParentElement = term5250ParentElement;
+        this.hasChinese = false;
     }
 
     render() {
@@ -43,7 +43,10 @@ class TerminalRender {
         let pos;
 
         for (pos = 0; pos < validLength; pos++) {
-            let newState = this.getCanvasSectState(ch, attr, this.regScr.buffer[pos], this.regScr.attrMap[pos].screenAttr, state);
+            const nextChar = this.regScr.buffer[pos];
+            const nextAttr = this.regScr.attrMap[pos].screenAttr;
+            if (DBCS.isChinese(nextChar)) { this.hasChinese = true; }
+            const newState = this.getCanvasSectState(ch, attr, nextChar, nextAttr, state);
 
             if (newState === State.NO_SECTION) {
                 if (n > 0) {
@@ -73,6 +76,8 @@ class TerminalRender {
 
             ch = this.regScr.buffer[pos];
             attr = this.regScr.attrMap[pos].screenAttr;
+
+            if (DBCS.isChinese(ch)) { this.hasChinese = true; }
         }
 
         if (n > 0) {
@@ -134,14 +139,15 @@ class TerminalRender {
         const text = Screen.copyPositionsFromBuffer(regScr, fromPos, toPos);
         const rowStr = `${row}`;
         const colStr = `${col}`;
+        const isChinese = DBCS.hasChinese(text);
 
-        if (DBCS.hasChinese(text)) {
+        if (isChinese) {
             cols = DBCS.calcDisplayLength(text)
         }
 
         const section = document.createElement('pre');
 
-        section.className = 'bterm-render-section';
+        section.className = ! isChinese ? 'bterm-render-section' : 'bterm-render-section-dbyte';
         section.id = `r${StringExt.padLeft(rowStr, 2, '0')}c${StringExt.padLeft(colStr, 3, '0') }`;
         section.style.gridColumnStart = col + 1;
         section.style.gridColumnEnd = col + 1 + cols;
@@ -164,10 +170,10 @@ class TerminalRender {
             return;
         }
 
-        const map = new BufferMapping(this.termLayout._5250.cols);
+        const map = new BufferMapping(this.termLayout._5250.cols, this.hasChinese);
 
         let row = map.rowFromPos(fromPos);
-        let col = map.colFromPos(fromPos);
+        let col = map.colFromPos(fromPos, this.regScr.buffer);
 
         if (this.regScr.attrMap[fromPos].usage !== 'o') {
             const inputField = this.regScr.attrMap[fromPos].field;
@@ -252,24 +258,24 @@ class TerminalRender {
             return;
         }
 
-        const map = new BufferMapping(this.termLayout._5250.cols);
+        const map = new BufferMapping(this.termLayout._5250.cols, this.hasChinese);
 
         for (let i = 0, l = missing.length; i < l; i++) {
             const rowCol = missing[i];
             const pos = map.coordToPos(rowCol.row, rowCol.col);
-            const fld = TerminalRender.lookupFieldWithPosition(pos, this.termLayout, this.dataSet);
+            const fld = TerminalRender.lookupFieldWithPosition(pos, this.termLayout, this.dataSet, this.hasChinese);
             if (!fld) { continue; /* should never happen */ }
             this.createCanvasSectGroup(frag, pos, pos + fld.len - 1, []);
         }
     }
 
     renderInputCanvasSections(termSectionsParent, fromPos, toPos) {
-        let fromFld = TerminalRender.lookupFieldWithPosition(fromPos, this.termLayout, this.dataSet);
-        const toField = TerminalRender.lookupFieldWithPosition(toPos, this.termLayout, this.dataSet);
+        let fromFld = TerminalRender.lookupFieldWithPosition(fromPos, this.termLayout, this.dataSet, this.hasChinese);
+        const toField = TerminalRender.lookupFieldWithPosition(toPos, this.termLayout, this.dataSet, this.hasChinese);
 
         while (!fromFld && fromPos < toPos) {
             fromPos = fromPos + 1;
-            fromFld = TerminalRender.lookupFieldWithPosition(fromPos, this.termLayout, this.dataSet);
+            fromFld = TerminalRender.lookupFieldWithPosition(fromPos, this.termLayout, this.dataSet, this.hasChinese);
         }
 
         if (!fromFld) {
@@ -425,8 +431,8 @@ class TerminalRender {
         divEl.appendChild(pre);
     }
 
-    static lookupFieldWithPosition(pos, termLayout, dataSet) {
-        const map = new BufferMapping(termLayout._5250.cols);
+    static lookupFieldWithPosition(pos, termLayout, dataSet, hasChinese) {
+        const map = new BufferMapping(termLayout._5250.cols, hasChinese);
         const formatTable = dataSet.formatTable;
 
         if (!formatTable) {
