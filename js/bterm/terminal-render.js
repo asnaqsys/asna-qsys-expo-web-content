@@ -13,7 +13,14 @@ import { CHAR_MEASURE, TerminalDOM } from './terminal-dom.js';
 import { StringExt } from '../string.js';
 import { DBCS } from './terminal-dbcs.js';
 
-// const _debug = true; // Comment line for production !!!
+const State = {
+    NO_SECTION: 'n',
+    SWITCH_ATTR: '+a',
+    COUNT_SAME_ATTR: '=a',
+    SWITCH_CHARSET: '+d',
+    COUNT_SAME_CHARSET: '=d'
+}
+const _debug = false;
 
 class TerminalRender {
     constructor(termLayout, termColors, preFontFamily, regScr, dataSet, term5250ParentElement) {
@@ -27,7 +34,7 @@ class TerminalRender {
 
     render() {
         const fragment = document.createDocumentFragment();
-        let state = 'no section';
+        let state = State.NO_SECTION;
         let ch = '\0';
         let n = 0;
         let attr = new ScreenAttr('g', false, false, false, false, false);
@@ -38,23 +45,30 @@ class TerminalRender {
         for (pos = 0; pos < validLength; pos++) {
             let newState = this.getCanvasSectState(ch, attr, this.regScr.buffer[pos], this.regScr.attrMap[pos].screenAttr, state);
 
-            if (newState === 'no section') {
+            if (newState === State.NO_SECTION) {
                 if (n > 0) {
                     this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol);
                 }
                 n = 0;
                 state = newState;
             }
-            else if (newState === 'switch attr') {
+            else if (newState === State.SWITCH_ATTR) {
                 if (n > 0) {
                     this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol);
                 }
                 n = 0;
-                state = 'count same attr';
+                state = State.COUNT_SAME_ATTR;
             }
-            else if (newState === 'count same attr') {
+            else if (newState === State.COUNT_SAME_ATTR || newState === State.COUNT_SAME_CHARSET) {
                 n = n + 1;
                 state = newState;
+            }
+            else if (newState === State.SWITCH_CHARSET) {
+                if (n > 0) {
+                    this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol);
+                }
+                n = 1;
+                state = State.COUNT_SAME_CHARSET;
             }
 
             ch = this.regScr.buffer[pos];
@@ -72,33 +86,43 @@ class TerminalRender {
 
     getCanvasSectState(ch, attr, newCh, newAttr, currentState) {
         const chChanged = ch !== newCh;
-        const attrChanged = !this.isEqualAttr(attr, newAttr);
+        const attrChanged = !TerminalRender.isEqualAttr(attr, newAttr);
+        const charSetChanged = !TerminalRender.isEqualCharSet(ch, newCh);
 
-        if (currentState === 'count same attr' && attrChanged) {
+        if (currentState === State.COUNT_SAME_ATTR && attrChanged) {
             if (newCh === '\0' && this.isNormalAttr(newAttr)) {
-                return 'no section';
+                return State.NO_SECTION;
             }
-            return 'switch attr';
+            return State.SWITCH_ATTR;
+        }
+        else if ((currentState === State.COUNT_SAME_CHARSET || currentState === State.COUNT_SAME_ATTR) && charSetChanged) {
+            if (newCh === '\0' && this.isNormalAttr(newAttr)) {
+                return State.NO_SECTION;
+            }
+            return State.SWITCH_CHARSET;
         }
 
         if (chChanged && newCh === '\0' && this.isNormalAttr(newAttr)) {
-            return 'no section';
+            return State.NO_SECTION;
         }
-        else if (chChanged && !attrChanged) {
-            return 'count same attr';
+        else if (chChanged && !attrChanged && !charSetChanged) {
+            return State.COUNT_SAME_ATTR;
         }
         else if (!chChanged && attrChanged) {
-            if (currentState === 'count same attr') {
+            if (currentState === State.COUNT_SAME_ATTR) {
                 if (this.isNormalAttr(newAttr)) {
-                    return 'no section';
+                    return State.NO_SECTION;
                 }
-                return 'switch attr';
+                return State.SWITCH_ATTR;
             }
 
-            return 'count same attr';
+            return State.COUNT_SAME_ATTR;
         }
-        else if (chChanged) { // && attrChanged
-            return 'count same attr';
+        else if (chChanged) {
+            if (!charSetChanged) {
+                return State.COUNT_SAME_ATTR;
+            }
+            return State.COUNT_SAME_CHARSET;
         }
 
         return currentState;
@@ -108,8 +132,8 @@ class TerminalRender {
         const len = toPos - fromPos + 1;
         let cols = len;
         const text = Screen.copyPositionsFromBuffer(regScr, fromPos, toPos);
-        const rowStr = '' + row;
-        const colStr = '' + col;
+        const rowStr = `${row}`;
+        const colStr = `${col}`;
 
         if (DBCS.hasChinese(text)) {
             cols = DBCS.calcDisplayLength(text)
@@ -118,7 +142,7 @@ class TerminalRender {
         const section = document.createElement('pre');
 
         section.className = 'bterm-render-section';
-        section.id = 'r' + StringExt.padLeft(rowStr, 2, '0') + 'c' + StringExt.padLeft(colStr, 3, '0');
+        section.id = `r${StringExt.padLeft(rowStr, 2, '0')}c${StringExt.padLeft(colStr, 3, '0') }`;
         section.style.gridColumnStart = col + 1;
         section.style.gridColumnEnd = col + 1 + cols;
         section.style.gridRowStart = row + 1;
@@ -323,7 +347,7 @@ class TerminalRender {
         this.renderInputCanvasSections(this.term5250ParentElement, fromPos, toPos);
     }
 
-    isEqualAttr(attr, newAttr) {
+    static isEqualAttr(attr, newAttr) {
         if (!attr && newAttr || attr && !newAttr) {
             return false;
         }
@@ -333,6 +357,16 @@ class TerminalRender {
             attr.blink === newAttr.blink &&
             attr.nonDisp === newAttr.nonDisp &&
             attr.colSep === newAttr.colSep;
+    }
+
+    static isEqualCharSet(ch, newCh) {
+        if (ch === newCh || ch === '\0' || newCh === '\0') {
+            return true;
+        }
+        const a = DBCS.isChinese(ch) && DBCS.isChinese(newCh);
+        const b = !DBCS.isChinese(ch) && !DBCS.isChinese(newCh);
+
+        return  a || b;
     }
 
     isNormalAttr(attr) {
@@ -420,21 +454,8 @@ class TerminalRender {
             [/"/g, "&quot;"]
         ];
 
-        let before, after;
-        if (typeof _debug !== 'undefined') {
-            before = text.length;
-        }
-
         for (var item in findReplace) {
             text = text.replace(findReplace[item][0], findReplace[item][1]);
-        }
-
-        if (typeof _debug !== 'undefined') {
-            after = text.length;
-
-            if (before !== after) {
-                console.log(`Text was escaped! ${before} -> ${after}`);
-            }
         }
 
         return text;
