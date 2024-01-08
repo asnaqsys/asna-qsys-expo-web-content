@@ -118,7 +118,7 @@ class Terminal {
 
                 this.termLayout = {
                     w: NaN, h: NaN,
-                    _5250: { l: NaN, t: NaN, w: NaN, h: NaN, rows: NaN, cols: NaN, msgLight: false, fontSizePix: NaN },
+                    _5250: { l: NaN, t: NaN, w: NaN, h: NaN, rows: NaN, cols: NaN, msgLight: false },
                     status: { l: NaN, t: NaN, w: NaN, h: NaN }
                 };
 
