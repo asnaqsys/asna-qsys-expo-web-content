@@ -156,14 +156,13 @@ class TerminalRender {
         }
 
         const section = document.createElement('pre');
+        let className = isChinese ? 'bterm-render-section-dbyte' : 'bterm-render-section';
 
-        if (this.isNormalAttr(attr) && FKeyHotspot.identify(text).f) {
-            section.className = 'bterm-render-section-hotkey';
-        }
-        else {
-            section.className = !isChinese ? 'bterm-render-section' : 'bterm-render-section-dbyte';
+        if (FKeyHotspot.identify(text).f) {
+            className += ' bterm-hotkey';
         }
 
+        section.className = className;
         section.id = `r${StringExt.padLeft(rowStr, 2, '0')}c${StringExt.padLeft(colStr, 3, '0') }`;
         section.style.gridColumnStart = col + 1;
         section.style.gridColumnEnd = col + 1 + cols;

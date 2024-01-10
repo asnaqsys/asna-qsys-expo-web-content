@@ -303,7 +303,7 @@ class FKeyHotspot {
     }
 
     static enableClickEvent(term, fExecute) {
-        const fkeys = term.querySelectorAll('.bterm-render-section-hotkey');
+        const fkeys = term.querySelectorAll(`pre[class~=bterm-hotkey]`);
         const l = fkeys.length;
         for (let i = 0; i < l; i++) {
             fkeys[i].addEventListener('mouseup', (event) => {
