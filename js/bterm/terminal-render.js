@@ -13,6 +13,7 @@ import { CHAR_MEASURE } from './terminal-dom.js';
 import { StringExt } from '../string.js';
 import { DBCS } from './terminal-dbcs.js';
 import { TerminalDOM } from './terminal-dom.js';
+import { FKeyHotspot } from './terminal-fkey-hotspot.js';
 
 const DBYTE_LETTER_SPACING_TRY_INCREMENT = 0.1;
 
@@ -102,19 +103,19 @@ class TerminalRender {
         const charSetChanged = !TerminalRender.isEqualCharSet(ch, newCh);
 
         if (currentState === State.COUNT_SAME_ATTR && attrChanged) {
-            if (newCh === '\0' && this.isNormalAttr(newAttr)) {
+            if (newCh === '\0' && this.isNormalColorAndAttr(newAttr)) {
                 return State.NO_SECTION;
             }
             return State.SWITCH_ATTR;
         }
         else if ((currentState === State.COUNT_SAME_CHARSET || currentState === State.COUNT_SAME_ATTR) && charSetChanged) {
-            if (newCh === '\0' && this.isNormalAttr(newAttr)) {
+            if (newCh === '\0' && this.isNormalColorAndAttr(newAttr)) {
                 return State.NO_SECTION;
             }
             return State.SWITCH_CHARSET;
         }
 
-        if (chChanged && newCh === '\0' && this.isNormalAttr(newAttr)) {
+        if (chChanged && newCh === '\0' && this.isNormalColorAndAttr(newAttr)) {
             return State.NO_SECTION;
         }
         else if (chChanged && !attrChanged && !charSetChanged) {
@@ -122,7 +123,7 @@ class TerminalRender {
         }
         else if (!chChanged && attrChanged) {
             if (currentState === State.COUNT_SAME_ATTR) {
-                if (this.isNormalAttr(newAttr)) {
+                if (this.isNormalColorAndAttr(newAttr)) {
                     return State.NO_SECTION;
                 }
                 return State.SWITCH_ATTR;
@@ -140,7 +141,7 @@ class TerminalRender {
         return currentState;
     }
 
-    createCanvasSection(frag, regScr, fromPos, toPos, row, col, bkColor, color, reverse, underscore) {
+    createCanvasSection(frag, regScr, fromPos, toPos, row, col, bkColor, attr) {
         const len = toPos - fromPos + 1;
         let cols = len;
         let text = Screen.copyPositionsFromBuffer(regScr, fromPos, toPos);
@@ -156,7 +157,13 @@ class TerminalRender {
 
         const section = document.createElement('pre');
 
-        section.className = ! isChinese ? 'bterm-render-section' : 'bterm-render-section-dbyte';
+        if (this.isNormalAttr(attr) && FKeyHotspot.identify(text).f) {
+            section.className = 'bterm-render-section-hotkey';
+        }
+        else {
+            section.className = !isChinese ? 'bterm-render-section' : 'bterm-render-section-dbyte';
+        }
+
         section.id = `r${StringExt.padLeft(rowStr, 2, '0')}c${StringExt.padLeft(colStr, 3, '0') }`;
         section.style.gridColumnStart = col + 1;
         section.style.gridColumnEnd = col + 1 + cols;
@@ -166,7 +173,7 @@ class TerminalRender {
 
         section.style.borderBottomWidth = CHAR_MEASURE.UNDERLINE_HEIGHT + 'px'; // ???
 
-        this.setCanvasSectionText(section, text, bkColor, color, reverse, underscore, section.id === 'r19c006'); // Instrument for automated testing
+        this.setCanvasSectionText(section, text, bkColor, attr.color, attr.reverse, attr.underscore, section.id === 'r19c006'); // Instrument for automated testing
 
         frag.appendChild(section);
     }
@@ -194,7 +201,7 @@ class TerminalRender {
 
         if (col + len <= this.termLayout._5250.cols) {
             elRowCol.push({ row: row, col: col });
-            this.createCanvasSection(frag, this.regScr, fromPos, toPos, row, col, 'bkgd', attr.color, attr.reverse, attr.underscore); // No blink nor colSep
+            this.createCanvasSection(frag, this.regScr, fromPos, toPos, row, col, 'bkgd', attr ); // No blink nor colSep
             return;
         }
         else {
@@ -205,7 +212,7 @@ class TerminalRender {
             while (len > 0) {
                 toPos = fromPos + len - 1;
                 elRowCol.push({ row: row, col: col });
-                this.createCanvasSection(frag, this.regScr, fromPos, toPos, row, col, 'bkgd', attr.color, attr.reverse, attr.underscore); // No blink nor colSep            
+                this.createCanvasSection(frag, this.regScr, fromPos, toPos, row, col, 'bkgd', attr); // No blink nor colSep            
 
                 fromPos = fromPos + len;
                 col = 0;
@@ -441,8 +448,12 @@ class TerminalRender {
         return result;
     }
 
+    isNormalColorAndAttr(attr) {
+        return attr && attr.color === 'g' && this.isNormalAttr(attr);
+    }
+
     isNormalAttr(attr) {
-        return attr && attr.color === 'g' && !attr.reverse && !attr.underscore && !attr.blink && !attr.nonDisp && !attr.colSep;
+        return attr && !attr.reverse && !attr.underscore && !attr.blink && !attr.nonDisp && !attr.colSep;
     }
 
     getWebColor(c) {

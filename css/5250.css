@@ -15,7 +15,7 @@ body {
     padding:0px;
 }
 
-.bterm-render-section, .bterm-render-section-dbyte, .bterm-cursor {
+.bterm-render-section, .bterm-render-section-dbyte, .bterm-render-section-hotkey, .bterm-cursor {
     font-family: var(--term-font-family);
     font-size: var(--term-font-size);
     margin: 0;
@@ -24,7 +24,7 @@ body {
     user-select: none;
 }
 
-.bterm-render-section, .bterm-render-section-dbyte {
+.bterm-render-section, .bterm-render-section-dbyte, .bterm-render-section-hotkey {
     display: block;
     white-space: pre;
     overflow: hidden;
@@ -33,6 +33,12 @@ body {
 
 .bterm-render-section-dbyte {
     letter-spacing: var(--term-dbyte-letter-spacing);
+}
+
+.bterm-render-section-hotkey {
+    color: black !important;
+    background-color: whitesmoke !important;
+    cursor: pointer;
 }
 
 .bterm-cursor {
