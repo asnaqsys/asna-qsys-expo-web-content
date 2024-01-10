@@ -54,14 +54,14 @@ class TerminalRender {
 
             if (newState === State.NO_SECTION) {
                 if (n > 0) {
-                    this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol);
+                    this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol, true);
                 }
                 n = 0;
                 state = newState;
             }
             else if (newState === State.SWITCH_ATTR) {
                 if (n > 0) {
-                    this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol);
+                    this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol, true);
                 }
                 n = 0;
                 state = State.COUNT_SAME_ATTR;
@@ -72,7 +72,7 @@ class TerminalRender {
             }
             else if (newState === State.SWITCH_CHARSET) {
                 if (n > 0) {
-                    this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol);
+                    this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol, true);
                 }
                 n = 1;
                 state = State.COUNT_SAME_CHARSET;
@@ -85,7 +85,7 @@ class TerminalRender {
         }
 
         if (n > 0) {
-            this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol);
+            this.createCanvasSectGroup(fragment, pos - n, pos - 1, elRowCol, true);
         }
 
         this.completeEmptyFieldCanvasSections(fragment, elRowCol);
@@ -141,7 +141,7 @@ class TerminalRender {
         return currentState;
     }
 
-    createCanvasSection(frag, regScr, fromPos, toPos, row, col, bkColor, attr) {
+    createCanvasSection(frag, regScr, fromPos, toPos, row, col, bkColor, attr, maybeHotKey) {
         const len = toPos - fromPos + 1;
         let cols = len;
         let text = Screen.copyPositionsFromBuffer(regScr, fromPos, toPos);
@@ -158,7 +158,7 @@ class TerminalRender {
         const section = document.createElement('pre');
         let className = isChinese ? 'bterm-render-section-dbyte' : 'bterm-render-section';
 
-        if (FKeyHotspot.identify(text).f) {
+        if (maybeHotKey && FKeyHotspot.identify(text).f) {
             className += ' bterm-hotkey';
         }
 
@@ -177,7 +177,7 @@ class TerminalRender {
         frag.appendChild(section);
     }
 
-    createCanvasSectGroup(frag, fromPos, toPos, elRowCol) {
+    createCanvasSectGroup(frag, fromPos, toPos, rowColJsonArray, maybeHotKey) {
         let len = toPos - fromPos + 1;
         const attr = this.regScr.attrMap[fromPos].screenAttr;
 
@@ -199,8 +199,8 @@ class TerminalRender {
         }
 
         if (col + len <= this.termLayout._5250.cols) {
-            elRowCol.push({ row: row, col: col });
-            this.createCanvasSection(frag, this.regScr, fromPos, toPos, row, col, 'bkgd', attr ); // No blink nor colSep
+            rowColJsonArray.push({ row: row, col: col });
+            this.createCanvasSection(frag, this.regScr, fromPos, toPos, row, col, 'bkgd', attr, maybeHotKey ); // No blink nor colSep
             return;
         }
         else {
@@ -210,8 +210,8 @@ class TerminalRender {
 
             while (len > 0) {
                 toPos = fromPos + len - 1;
-                elRowCol.push({ row: row, col: col });
-                this.createCanvasSection(frag, this.regScr, fromPos, toPos, row, col, 'bkgd', attr); // No blink nor colSep            
+                rowColJsonArray.push({ row: row, col: col });
+                this.createCanvasSection(frag, this.regScr, fromPos, toPos, row, col, 'bkgd', attr, maybeHotKey); // No blink nor colSep            
 
                 fromPos = fromPos + len;
                 col = 0;
@@ -246,8 +246,6 @@ class TerminalRender {
             section.style.borderBottomWidth = '0px';
         }
         section.textContent = text;
-
-        // TerminalRender.setDivText(section, text, /*this.preFontFamily,*/ instTesting);
     }
 
     completeEmptyFieldCanvasSections (frag, elRowCol) {
@@ -280,7 +278,7 @@ class TerminalRender {
             const pos = map.coordToPos(rowCol.row, rowCol.col);
             const fld = TerminalRender.lookupFieldWithPosition(pos, this.termLayout, this.dataSet, this.hasChinese);
             if (!fld) { continue; /* should never happen */ }
-            this.createCanvasSectGroup(frag, pos, pos + fld.len - 1, []);
+            this.createCanvasSectGroup(frag, pos, pos + fld.len - 1, [], false);
         }
     }
 
