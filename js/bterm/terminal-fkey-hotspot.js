@@ -282,24 +282,30 @@ class FKeyHotspot {
             return error;
         }
 
+        const fkeyStr = text.substring(0, eqSign);
         const label = text.substring(eqSign + 1);
 
-        let fNumS = '';
-        for (let i = 1; i < eqSign; i++) {
-            const ch = text[i];
-            if (!Validate.digitsOnly(ch)) {
-                return error;
-            }
-            fNumS += ch;
-        }
-
-        const fNum = parseInt(fNumS, 10);
-
+        const fNum = FKeyHotspot.parseFkeyNum(fkeyStr);
         if (isNaN(fNum) || fNum < 1 || fNum > 24) {
             return error;
         }
 
         return { f: fNum, l: label };
+    }
+
+    static parseFkeyNum(fkeyStr) {
+        let result = '';
+        const l = fkeyStr.length;
+        for (let i = 1; i < l; i++) {
+            const ch = fkeyStr[i];
+            if (ch === '=') { break; }
+            if (!Validate.digitsOnly(ch)) {
+                return error;
+            }
+            result += ch;
+        }
+
+        return parseInt(result, 10);
     }
 
     static enableClickEvent(term, fExecute) {
@@ -308,10 +314,10 @@ class FKeyHotspot {
         for (let i = 0; i < l; i++) {
             fkeys[i].addEventListener('mouseup', (event) => {
                 const target = event.target;
-                const id = FKeyHotspot.identify(target.innerText)
+                const fNum = FKeyHotspot.parseFkeyNum(target.innerText)
 
-                if (id.f) {
-                    fExecute('', `F${id.f}`)
+                if (!isNaN(fNum) && fNum >= 1 && fNum <= 24) {
+                    fExecute('', `F${fNum}`)
                 }
             });
         }
