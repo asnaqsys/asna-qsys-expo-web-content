@@ -158,7 +158,7 @@ class TerminalRender {
         const section = document.createElement('pre');
         let className = isChinese ? 'bterm-render-section-dbyte' : 'bterm-render-section';
 
-        if (maybeHotKey && FKeyHotspot.identify(text).fNum) {
+        if (maybeHotKey && FKeyHotspot.identify(text,0).fNum) {
             className += ' bterm-hotkey';
 
             const fkeyParts = FKeyHotspot.splitFkeyParts(text);
