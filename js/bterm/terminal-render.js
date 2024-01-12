@@ -170,7 +170,40 @@ class TerminalRender {
         this.createPreElement(frag, row, col, className, text, adjLen, bkColor, attr );
 
         if (fkeyParts.length > 0) {
-            this.createPreElement(frag, row, col + fkeyParts[0].fkey.length, 'bterm-render-section', fkeyParts[0].label, fkeyParts[0].label.length, bkColor, attr);
+            this.createPreElement(
+                frag, row,
+                col + fkeyParts[0].fkey.length,
+                'bterm-render-section',
+                fkeyParts[0].label,
+                fkeyParts[0].label.length,
+                bkColor,
+                attr
+            );
+
+            const l = fkeyParts.length;
+            for (let i = 1; i < l; i++) {
+                this.createPreElement(
+                    frag,
+                    row,
+                    col + fkeyParts[i].pos,
+                    'bterm-render-section + bterm-hotkey',
+                    fkeyParts[i].fkey,
+                    fkeyParts[i].fkey.length,
+                    bkColor,
+                    attr
+                );
+                this.createPreElement(
+                    frag,
+                    row,
+                    col + fkeyParts[i].pos + fkeyParts[i].fkey.length /* + 1*/, // len(Fxx=)
+                    'bterm-render-section',
+                    fkeyParts[i].label,
+                    fkeyParts[i].label.length,
+                    bkColor,
+                    attr
+                );
+
+            }
         }
     }
 
