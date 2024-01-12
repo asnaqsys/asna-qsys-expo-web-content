@@ -39,6 +39,7 @@ body {
     color: black !important;
     background-color: whitesmoke !important;
     cursor: pointer;
+    border-radius: 15%;
 }
 
 .bterm-cursor {

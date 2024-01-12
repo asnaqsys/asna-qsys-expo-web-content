@@ -158,14 +158,17 @@ class TerminalRender {
         const section = document.createElement('pre');
         let className = isChinese ? 'bterm-render-section-dbyte' : 'bterm-render-section';
 
+        let fkeyParts = [];
+        let adjLen = len;
         if (maybeHotKey && FKeyHotspot.identify(text,0).fNum) {
             className += ' bterm-hotkey';
 
-            const fkeyParts = FKeyHotspot.splitFkeyParts(text);
-            const fkeyPartsL = fkeyParts.length;
-            //for (let i = 0; i < fkeyPartsL; i++) {
-            //    console.log(`${i} part:${fkeyParts[i]}`);
-            //}
+            fkeyParts = FKeyHotspot.splitFkeyParts(text);
+            if (fkeyParts.length > 0) {
+                text = fkeyParts[0].fkey;
+                adjLen = text.length;
+                cols = adjLen;
+            }
         }
 
         section.className = className;
@@ -174,13 +177,38 @@ class TerminalRender {
         section.style.gridColumnEnd = col + 1 + cols;
         section.style.gridRowStart = row + 1;
         section.style.gridRowEnd = row + 1;
-        section.setAttribute('data-asna-len', len);
+        section.setAttribute('data-asna-len', adjLen);
 
         section.style.borderBottomWidth = CHAR_MEASURE.UNDERLINE_HEIGHT + 'px'; // ???
 
-        this.setCanvasSectionTextAnd5250Attr(section, text, bkColor, attr.color, attr.reverse, attr.underscore, section.id === 'r19c006'); // Instrument for automated testing
+        this.setCanvasSectionTextAnd5250Attr(section, text, bkColor, attr.color, attr.reverse, attr.underscore);
 
         frag.appendChild(section);
+
+        if (fkeyParts.length > 0) {
+            const section = document.createElement('pre');
+            let className = 'bterm-render-section';
+
+            text = fkeyParts[0].label;
+            adjLen = text.length;
+            cols = adjLen;
+
+            const colOffset = fkeyParts[0].fkey.length;
+            const colLabelStr = `${col + colOffset + 1}`; // Fxx=
+            section.className = className;
+            section.id = `r${StringExt.padLeft(rowStr, 2, '0')}c${StringExt.padLeft(colLabelStr, 3, '0')}`;
+            section.style.gridColumnStart = col + colOffset + 1;
+            section.style.gridColumnEnd = col + colOffset + 1 + cols;
+            section.style.gridRowStart = row + 1;
+            section.style.gridRowEnd = row + 1;
+            section.setAttribute('data-asna-len', adjLen);
+
+            section.style.borderBottomWidth = CHAR_MEASURE.UNDERLINE_HEIGHT + 'px'; // ???
+
+            this.setCanvasSectionTextAnd5250Attr(section, text, bkColor, attr.color, attr.reverse, attr.underscore );
+
+            frag.appendChild(section);
+        }
     }
 
     createCanvasSectGroup(frag, fromPos, toPos, rowColJsonArray, maybeHotKey) {
