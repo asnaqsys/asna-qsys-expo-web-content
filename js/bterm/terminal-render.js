@@ -158,8 +158,14 @@ class TerminalRender {
         const section = document.createElement('pre');
         let className = isChinese ? 'bterm-render-section-dbyte' : 'bterm-render-section';
 
-        if (maybeHotKey && FKeyHotspot.identify(text).f) {
+        if (maybeHotKey && FKeyHotspot.identify(text).fNum) {
             className += ' bterm-hotkey';
+
+            const fkeyParts = FKeyHotspot.splitFkeyParts(text);
+            const fkeyPartsL = fkeyParts.length;
+            //for (let i = 0; i < fkeyPartsL; i++) {
+            //    console.log(`${i} part:${fkeyParts[i]}`);
+            //}
         }
 
         section.className = className;
@@ -172,7 +178,7 @@ class TerminalRender {
 
         section.style.borderBottomWidth = CHAR_MEASURE.UNDERLINE_HEIGHT + 'px'; // ???
 
-        this.setCanvasSectionText(section, text, bkColor, attr.color, attr.reverse, attr.underscore, section.id === 'r19c006'); // Instrument for automated testing
+        this.setCanvasSectionTextAnd5250Attr(section, text, bkColor, attr.color, attr.reverse, attr.underscore, section.id === 'r19c006'); // Instrument for automated testing
 
         frag.appendChild(section);
     }
@@ -223,7 +229,7 @@ class TerminalRender {
         }
     }
 
-    setCanvasSectionText(section, text, bkColor, color, reverse, underscore, instTesting) {
+    setCanvasSectionTextAnd5250Attr(section, text, bkColor, color, reverse, underscore, instTesting) {
         if (!reverse) {
             if (bkColor !== 'bkgd') {
                 section.style.backgroundColor = this.getWebColor(bkColor);
@@ -231,7 +237,6 @@ class TerminalRender {
             section.style.color = this.getWebColor(color);
         }
         else {
-
             if (color !== 'bkgd') {
                 section.style.backgroundColor = this.getWebColor(color);
             }
@@ -387,7 +392,7 @@ class TerminalRender {
             }
 
             const text = Screen.copyPositionsFromBuffer(this.regScr, sectStartPos, sectStartPos + virtField.len);
-            this.setCanvasSectionText(dirtyInputSections[index], text, 'bkgd', color, reverse, underscore, virtField.row === 19 && virtField.col === 6); // Instrument for automated testing
+            this.setCanvasSectionTextAnd5250Attr(dirtyInputSections[index], text, 'bkgd', color, reverse, underscore, virtField.row === 19 && virtField.col === 6); // Instrument for automated testing
         }
     }
 

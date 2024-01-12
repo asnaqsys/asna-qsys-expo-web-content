@@ -283,14 +283,12 @@ class FKeyHotspot {
         }
 
         const fkeyStr = text.substring(0, eqSign);
-        const label = text.substring(eqSign + 1);
-
         const fNum = FKeyHotspot.parseFkeyNum(fkeyStr);
         if (isNaN(fNum) || fNum < 1 || fNum > 24) {
             return error;
         }
 
-        return { f: fNum, l: label };
+        return { fkey: fkeyStr, fNum: fNum,  posLabel: eqSign + 1 };
     }
 
     static parseFkeyNum(fkeyStr) {
@@ -321,6 +319,23 @@ class FKeyHotspot {
                 }
             });
         }
+    }
+
+    static splitFkeyParts(text) {
+        let result = [];
+        const l = text.length;
+        let partLength = l;
+        for (let i = l - 1; i >= 0; i--) {
+            if (partLength == i) { continue; }
+            const subText = text.substring(i, i+(partLength-i));
+            const subFkey = FKeyHotspot.identify(subText);
+            if (subFkey.fNum) {
+                result.push(subFkey);
+                partLength = i;
+            }
+        }
+
+        return result;
     }
 }
 
