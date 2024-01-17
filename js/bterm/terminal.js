@@ -2909,13 +2909,6 @@ class Terminal {
                 __pointer = '';
                 return;
             }
-            else if (ASNA.FKeyHotSpot.Belongs(target)) {
-                ASNA.Pointer.CancelMoveEvents(window);
-                ASNA.Pointer.RemoveListenToEvents(window);
-                ASNA.FKeyHotSpot.SetCapture(target, id, x, y, function () { ASNA.Pointer.ListenToEvents(window, _pointerStart, _pointerMove, _pointerEnd, _pointerCancel); });
-                __pointer = '';
-                return;
-            }
             else if (ASNA.BigButton.Belongs(target)) {
                 ASNA.Pointer.CancelMoveEvents(window);
                 ASNA.Pointer.RemoveListenToEvents(window);

@@ -86,7 +86,7 @@ class TextSelect {
     }
 
     static hasPointerMovedToStartSelection(cursorDim, dx, dy) {
-        return dx > cursorDim.w || dy > cursorDim.y;
+        return dx > cursorDim.w || dy > cursorDim.h;
     }
 
     static normalizeCoordRect(cursorDim, pt, pt2) {
