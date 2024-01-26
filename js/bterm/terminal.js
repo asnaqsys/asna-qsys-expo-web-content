@@ -2784,37 +2784,40 @@ class Terminal {
     }
 
     handlePointerMoveEvent(event) {
+        if (this.textSelect && this.textSelect.mode === TEXT_SELECT_MODES.COMPLETE) {
+            return;
+        }
+
         if (!this.devicePointers || isNaN(this.termLayout.w) || !this.textSelect.anchor) {
             if (!this.devicePointers) { TextSelect.log(`handlePointerMoveEvent: !this.devicePointers`); }
             if (isNaN(this.termLayout.w)) { TextSelect.log(`handlePointerMoveEvent: isNaN(this.termLayout.w)`); }
             if (isNaN(!this.textSelect.anchor)) { TextSelect.log(`handlePointerMoveEvent: !this.textSelect.anchor`); }
             return;
         }
+
         const pt = this.textSelect.clientPt(this.AsnaTerm5250, event);
 
-        if (this.textSelect.mode !== TEXT_SELECT_MODES.COMPLETE) {
-            const dx = Math.abs(this.textSelect.anchor.x - pt.x);
-            const dy = Math.abs(this.textSelect.anchor.y - pt.y);
+        const dx = Math.abs(this.textSelect.anchor.x - pt.x);
+        const dy = Math.abs(this.textSelect.anchor.y - pt.y);
 
-            TextSelect.log(`handlePointerMoveEvent (not complete): ${this.textSelect.currentModeString()}`);
+        TextSelect.log(`handlePointerMoveEvent (not complete): ${this.textSelect.currentModeString()}`);
 
-            let potentialStart = false;
-            let cursorDim = TextSelect.getCursorDim(this.termCursor);
-            if (this.textSelect.mode === TEXT_SELECT_MODES.POTENTIAL_SELECTION) {
-                potentialStart = cursorDim && TextSelect.hasPointerMovedToStartSelection(cursorDim, dx, dy);
-                TextSelect.log(potentialStart ? `hasPointerMovedToStartSelection` : `NOT hasPointerMovedToStartSelection!!!`);
-            }
+        let potentialStart = false;
+        let cursorDim = TextSelect.getCursorDim(this.termCursor);
+        if (this.textSelect.mode === TEXT_SELECT_MODES.POTENTIAL_SELECTION) {
+            potentialStart = cursorDim && TextSelect.hasPointerMovedToStartSelection(cursorDim, dx, dy);
+            TextSelect.log(potentialStart ? `hasPointerMovedToStartSelection` : `NOT hasPointerMovedToStartSelection!!!`);
+        }
 
-            if (cursorDim && (this.textSelect.mode === TEXT_SELECT_MODES.POTENTIAL_SELECTION && potentialStart || this.textSelect.mode === TEXT_SELECT_MODES.IN_PROGRESS)) {
-                this.textSelect.setInProgress(); 
+        if (cursorDim && (this.textSelect.mode === TEXT_SELECT_MODES.POTENTIAL_SELECTION && potentialStart || this.textSelect.mode === TEXT_SELECT_MODES.IN_PROGRESS)) {
+            this.textSelect.setInProgress(); 
 
-                const sel = this.textSelect.calcRect(pt, cursorDim);
-                const rect = this.getRect(sel.row, sel.col, sel.rows, sel.cols);
+            const sel = this.textSelect.calcRect(pt, cursorDim);
+            const rect = this.getRect(sel.row, sel.col, sel.rows, sel.cols);
 
-                this.textSelect.positionElement(rect, this.settingsStore.state.colors.sel);
-                this.cursor.hide();
-                this.textSelect.show();
-            }
+            this.textSelect.positionElement(rect, this.settingsStore.state.colors.sel);
+            this.cursor.hide();
+            this.textSelect.show();
         }
     }
 

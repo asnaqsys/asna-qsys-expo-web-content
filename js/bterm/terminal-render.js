@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-export { TerminalRender };
+export { TerminalRender, DATA_ATTR };
 
 import { Screen, ScreenAttr, Field  } from './terminal-screen.js';
 import { BufferMapping } from './buffer-mapping.js'
@@ -146,12 +146,12 @@ class TerminalRender {
     }
 
     createCanvasSection(frag, regScr, fromPos, toPos, row, col, bkColor, attr, maybeHotKey) {
-        const len = toPos - fromPos + 1;
-        let cols = len;
+        let len = toPos - fromPos + 1;
+        let cols = len; // used to define grid-cols (may be adjusted for Chinese chars)
         let text = Screen.copyPositionsFromBuffer(regScr, fromPos, toPos);
 
         text = TerminalRender.normalizeBlanks(text);
-        const isChinese = DBCS.hasChinese(text);
+        let isChinese = DBCS.hasChinese(text);
 
         if (isChinese) {
             cols = DBCS.calcDisplayLength(text)
@@ -160,65 +160,69 @@ class TerminalRender {
         let className = isChinese ? 'bterm-render-section-dbyte' : 'bterm-render-section';
 
         let fkeyParts = [];
-        let adjLen = Math.max(len, cols);
         if (maybeHotKey && FKeyHotspot.identify(text,0).fNum) {
             className += ' bterm-hotkey';
 
             fkeyParts = FKeyHotspot.splitFkeyParts(text);
             if (fkeyParts.length > 0) {
-                text = fkeyParts[0].fkey;
-                adjLen = text.length;
+                text = fkeyParts[0].fkey; // Can't be Chinese
+                len = text.length
+                cols = text.length;
             }
         }
 
-        this.createPreElement(frag, row, col, fromPos, adjLen, className, text, bkColor, attr );
+        this.createPreElement(frag, row, col, cols, fromPos, len, className, text, bkColor, attr );
 
         if (fkeyParts.length > 0) {
-            this.createPreElement(
-                frag,
-                row,
-                col + fkeyParts[0].fkey.length,
-                fromPos + fkeyParts[0].fkey.length,
-                fkeyParts[0].label.length,
-                'bterm-render-section',
-                fkeyParts[0].label,
-                bkColor,
-                attr
-            );
+            text = fkeyParts[0].label; // First FKey label
+            len = text.length;
+            cols = len;
+            text = TerminalRender.normalizeBlanks(text);
+            isChinese = DBCS.hasChinese(text);
+            if (isChinese) {
+                cols = DBCS.calcDisplayLength(text)
+            }
+
+            col     += fkeyParts[0].fkey.length;
+            fromPos += fkeyParts[0].fkey.length;
+            className = isChinese ? 'bterm-render-section-dbyte' : 'bterm-render-section';
+            this.createPreElement(frag, row, col, cols, fromPos, len, className, text, bkColor, attr );
+
+            col += len;
+            fromPos += len;
 
             const l = fkeyParts.length;
-            for (let i = 1; i < l; i++) {
-                this.createPreElement(
-                    frag,
-                    row,
-                    col + fkeyParts[i].pos,
-                    fromPos + fkeyParts[i].pos,
-                    fkeyParts[i].fkey.length,
-                    'bterm-render-section bterm-hotkey',
-                    fkeyParts[i].fkey,
-                    bkColor,
-                    attr
-                );
-                this.createPreElement(
-                    frag,
-                    row,
-                    col + fkeyParts[i].pos + fkeyParts[i].fkey.length,
-                    fromPos + fkeyParts[i].pos + fkeyParts[i].fkey.length,
-                    fkeyParts[i].label.length,
-                    'bterm-render-section',
-                    fkeyParts[i].label,
-                    bkColor,
-                    attr
-                );
+            for (let i = 1; i < l; i++) { // Rest of Fkey+Label in the same row.
+                text = fkeyParts[i].fkey; // Can't be Chinese
+                len = text.length;
+                cols = len;
+
+                this.createPreElement(frag, row, col, cols, fromPos, len, 'bterm-render-section bterm-hotkey', text, bkColor, attr);
+                col += len;
+                fromPos += len;
+
+                text = fkeyParts[i].label;
+                text = TerminalRender.normalizeBlanks(text);
+                len = text.length;
+                cols = len;
+                isChinese = DBCS.hasChinese(text);
+                if (isChinese) {
+                    cols = DBCS.calcDisplayLength(text)
+                }
+                className = isChinese ? 'bterm-render-section-dbyte' : 'bterm-render-section';
+
+                this.createPreElement( frag, row, col, cols, fromPos, len, className, text, bkColor, attr );
+                col += len;
+                fromPos += len;
             }
         }
     }
 
-    createPreElement(frag, row, col, regenpos, len, className, text, bkColor, attr) {
+    createPreElement(frag, row, col, cols, regenpos, len, className, text, bkColor, attr) {
         const section = document.createElement('pre');
         section.className = className;
         section.style.gridColumnStart = col + 1;
-        section.style.gridColumnEnd = col + 1 + len;
+        section.style.gridColumnEnd = col + 1 + cols;
         section.style.gridRowStart = row + 1;
         section.style.gridRowEnd = row + 1;
         section.setAttribute(`${DATA_ATTR.REGEN}`, `${regenpos},${len}`);
@@ -485,6 +489,7 @@ class TerminalRender {
     }
 
     static parseRegenDataAttr(regenData) {
+        if (!regenData) { return {}; }
         const parts = regenData.split(',');
         if (parts.length === 2) {
             return { pos: parseInt(parts[0], 10), len: parseInt(parts[1], 10) };
@@ -617,6 +622,5 @@ class TerminalRender {
         }
         return { startPos: startRowPos, text: text };
     }
-
 }
 
