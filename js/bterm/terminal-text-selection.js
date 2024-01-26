@@ -17,7 +17,7 @@ const TEXT_SELECT_MODES = {
 };
 
 const _debug = false;
-const _debug2 = true;
+const _debug2 = false;
 
 class TextSelect {
     constructor(selectionElement) {
@@ -46,12 +46,19 @@ class TextSelect {
         return clientPoint;
     }
 
-    reset() {
+    reset(callerMsg) {
         this.mode = TEXT_SELECT_MODES.PASSIVE;
         this.anchor = null;
         this.selectedRect = null;
         this.hide();
-        if (_debug) { console.log('TextSelect.Reset .selectedRect = null'); }
+        if (_debug) {
+            if (callerMsg) {
+                console.log(`TextSelect.Reset .selectedRect = null -- ${callerMsg}`);
+            }
+            else {
+                console.log('TextSelect.Reset .selectedRect = null');
+            }
+        }
     }
 
     positionElement(rect, color) {

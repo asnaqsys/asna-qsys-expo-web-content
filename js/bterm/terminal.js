@@ -719,7 +719,7 @@ class Terminal {
 
         Clipboard.setText( text );
         if (!noResetSelection) {
-            this.textSelect.reset();
+            this.textSelect.reset('copy');
         }
         this.updateCursor();
 
@@ -753,7 +753,7 @@ class Terminal {
             pos = pos + 1;
         }
         this.renderInputArea(fromPos, toPos);
-        this.textSelect.reset();
+        this.textSelect.reset('cut');
         this.updateCursor();
     }
 
@@ -1484,7 +1484,7 @@ class Terminal {
             this.preHelpErrorCode = null;
             this.renderStatusBar();
         }
-        this.textSelect.reset();
+        this.textSelect.reset('reset');
     }
 
     removeErrorLine() {    // put back the saved buffer and saved attrMap
@@ -2616,7 +2616,7 @@ class Terminal {
     }
 
     rebuildPage() {
-        this.textSelect.reset();
+        this.textSelect.reset('rebuild');
         TerminalRender.clearCanvas(this.AsnaTerm5250);
         this.toolbar.removeToolbars();
 
@@ -2751,7 +2751,7 @@ class Terminal {
             return;
         }
 
-        this.textSelect.reset();
+        this.textSelect.reset('pointer start');
 
         const scroll = this.getWindowScroll();
         let pt = { x: event.clientX - scroll.x, y: event.clientY - scroll.y };
@@ -2765,7 +2765,7 @@ class Terminal {
             return;
         }
 
-        if (target && !TerminalRender.is5250TextElement(this.AsnaTerm5250,target)) {
+        if (target && !TerminalRender.is5250TextElement(this.AsnaTerm5250, target) && target != this.AsnaTerm5250) {
             this.activateUI_Element(target);
             return;
         }
