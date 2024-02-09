@@ -701,7 +701,7 @@ class Terminal {
 
         while (pos <= toPos) {
             const rowBefore = map.rowFromPos(pos);
-            const colBefore = map.colFromPos(pos);
+            const colBefore = map.colFromPos(pos, this.regScr.buffer);
 
             if (colBefore < this.textSelect.selectedCoordRect.col || colBefore > (this.textSelect.selectedCoordRect.col + (this.textSelect.selectedCoordRect.cols - 1))) {
                 text += this.addNewLineRowChanged(++pos, rowBefore);
@@ -740,7 +740,7 @@ class Terminal {
         const map = new BufferMapping(this.termLayout._5250.cols, this.regScr.hasDByte);
 
         while (pos <= toPos) {
-            const colBefore = map.colFromPos(pos);
+            const colBefore = map.colFromPos(pos, this.regScr.buffer);
 
             if (colBefore < this.textSelect.selectedCoordRect.col || colBefore > (this.textSelect.selectedCoordRect.col + (this.textSelect.selectedCoordRect.cols - 1))) {
                 pos = pos + 1;
@@ -1132,7 +1132,7 @@ class Terminal {
                 pos = 0;
             }
 
-            this.cursor.col = map.colFromPos(pos);
+            this.cursor.col = map.colFromPos(pos, this.regScr.buffer);
             this.cursor.row = map.rowFromPos(pos);
 
             if (pos === initialPos || this.regScr.attrMap[pos].field) {  // back to the original position. Break infinite loop.
@@ -1242,7 +1242,7 @@ class Terminal {
                         if (c === '\r' && nc === '\n') { i++ }
 
                         c = text.charAt(i);
-                        this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos));
+                        this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos, this.regScr.buffer));
 
                         const row = this.cursor.row;
                         this.cursor.adjustToBounds();
@@ -1261,7 +1261,7 @@ class Terminal {
                 if (!sa || sa.usage === 'o') {
                     pos++;
                     if (pos < maxPos) {
-                        this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos));
+                        this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos, this.regScr.buffer));
 
                         const row = this.cursor.row;
                         this.cursor.adjustToBounds();
@@ -1282,7 +1282,7 @@ class Terminal {
                 }
                 if (c.charCodeAt(0) < 0x20) { c = ' '; }
 
-                this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos));
+                this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos, this.regScr.buffer));
                 this.writeOneCharAtCursor(c);
 
                 pos = this.regScr.coordToPos(this.cursor.row, this.cursor.col);
@@ -1302,7 +1302,7 @@ class Terminal {
                         let nc = text.charAt(i);
                         if (c === '\r' && nc === '\n') { i++; }
                         c = text.charAt(i);
-                        this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos));
+                        this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos,this.regScr.buffer));
                     }
                 }
 
@@ -2250,7 +2250,7 @@ class Terminal {
                 if (atDbcsEnd) {
                     const tmpPos = coordToPos(sa.field.row, sa.field.col) + sa.field.len;
                     const map = new BufferMapping(this.termLayout._5250.cols, this.regScr.hasDByte);
-                    this.cursor.setPosition(map.rowFromPos(tmpPos), map.colFromPos(tmpPos));
+                    this.cursor.setPosition(map.rowFromPos(tmpPos), map.colFromPos(tmpPos, this.regScr.buffer));
                 }
                 this.moveToNextInputArea(this.cursor.row, this.cursor.col);
 
@@ -2536,7 +2536,7 @@ class Terminal {
     moveToPos(pos, dirtyInputFld) {
         const map = new BufferMapping(this.termLayout._5250.cols, this.regScr.hasDByte);
 
-        this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos));
+        this.cursor.setPosition(map.rowFromPos(pos), map.colFromPos(pos, this.regScr.buffer));
         this.updateCursor(dirtyInputFld);
         this.renderStatusBar();
     }

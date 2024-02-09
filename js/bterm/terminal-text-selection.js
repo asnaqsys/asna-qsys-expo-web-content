@@ -8,7 +8,6 @@
 export { TextSelect, TEXT_SELECT_MODES, Point };
 
 import { TerminalRender, DATA_ATTR } from './terminal-render.js';
-// import { TerminalDOM } from './terminal-dom.js';
 import { BufferMapping } from './buffer-mapping.js'
 
 
