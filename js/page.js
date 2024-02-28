@@ -19,7 +19,7 @@ import { Checkbox, RadioButtonGroup } from '../js/multiple-choice.js';
 import { WaitForResponseAnimation } from '../js/wait-response/wait-response-animation.js';
 import { NavigationMenu } from '../js/nav-menu.js';
 import { DdsWindow } from '../js/dds-window.js';
-import { SubfileController } from '../js/subfile-paging/dom-init.js';
+import { SubfileController, Compat } from '../js/subfile-paging/dom-init.js';
 import { SubfilePaging } from '../js/subfile-paging/paging.js';
 import { SubfilePagingStore, SubfileState } from '../js/subfile-paging/paging-store.js';
 import { PositionCursor } from '../js/page-position-cursor.js';
@@ -238,6 +238,38 @@ class Page {
             }
 
             if (!postAjax) {
+                if ((aidKey === 'PgDn' || aidKey === 'PgUp') && window.asnaExpo.page.lastFocus) {
+                    const record = window.asnaExpo.page.lastFocus.closest(`[${AsnaDataAttrName.RECORD}]`);
+                    if (record) {
+                        const rollCaps = record.getAttribute(AsnaDataAttrName.RECORD_ROLLCAP);
+                        if (rollCaps) {
+                            const enabledRoll = JSON.parse(rollCaps);
+                            if (aidKey === 'PgDn' && enabledRoll.pgdn || aidKey === 'PgUp' && enabledRoll.pgup) {
+                                this.pushKey(aidKey);
+                                return;
+                            }
+                            else {
+                                const firstSflCtrlName = SubfileController.getFirstSubfileCtrlName();
+                                const firstCtrlStore = SubfilePagingStore.getSflCtlStore(firstSflCtrlName);
+                                if (firstCtrlStore) {
+                                    const recordAction = Kbd.handleRoll(aidKey, firstCtrlStore);
+                                    const sflStore = recordAction.sflCtlStore;
+                                    postAjax = recordAction.useAjax && sflStore;
+                                    if (postAjax) {
+                                        postAjax = !((aidKey === 'PgDn' || aidKey === 'PgUp') && !store.sflRecords.allowsAjax);
+                                        if (postAjax) {
+                                            this.suspendAsyncPost = true;
+                                            if (!SubfilePaging.requestPage(aidKey, firstCtrlStore, this.handleAjaxGetRecordsResponseEvent, this.handleAjaxGetRecordsErrorEvent)) {
+                                                this.suspendAsyncPost = false;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 this.pushKey(aidKey);
             }
         }
@@ -362,7 +394,7 @@ class Page {
 
         sflCtrlStore.sflRecords.from = Math.min(Math.min(sflCtrlStore.sflRecords.from, res.request.from), sflCtrlStore.sflRecords.from);
         sflCtrlStore.sflRecords.to = Math.max(sflCtrlStore.sflRecords.to, res.request.to-1);
-        sflCtrlStore.sflRecords.isLastPage = res.isLastPage ? 'true' : 'false';
+        sflCtrlStore.sflRecords.isLastPage = Compat.boolIsTrue(res.isLastPage);
         sflCtrlStore.current.topRrn = res.request.from;
 
         if (res.request.requestorAidKey === sflCtrlStore.fldDrop.aidKey) {
@@ -420,7 +452,7 @@ class Page {
         }
 
         if (sflCtrlStore.sflEnd.showSubfileEnd) {
-            const showAtBottom = sflCtrlStore.sflRecords.isLastPage === "true" ? sflCtrlStore.sflEnd.isSufileEnd : false;
+            const showAtBottom = Compat.boolIsTrue(sflCtrlStore.sflRecords.isLastPage) ?sflCtrlStore.sflEnd.isSufileEnd: false;
             const icon = SubfileController.addSubfileEndCue(
                 recordsContainer,
                 showAtBottom,
