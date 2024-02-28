@@ -145,7 +145,7 @@ class Kbd {
             }
         }
         if (action.showAlert) {
-            Kbd.showInvalidRollAlert();
+            Kbd._showInvalidRollAlert();
         }
         return { returnBooleanValue: false, shouldCancel: true };
     }
@@ -237,6 +237,10 @@ class Kbd {
     }
     
     showInvalidRollAlert() {
+        Kbd._showInvalidRollAlert();
+    }
+
+    static _showInvalidRollAlert() {
         const errorMsg = KEY_NOT_VALID_MSG.PgUp_PgDown;
         if (!PageAlert.prependPanelMsg(errorMsg)) {
             PageAlert.show(errorMsg, OK_TEXT);
