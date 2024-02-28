@@ -139,6 +139,9 @@ class Kbd {
             const sflCtrlStore = SubfilePagingStore.getSflCtlStore(selectedSflCtrlName);
             if (sflCtrlStore) {
                 action = Kbd.handleRoll(aidKey, sflCtrlStore);
+                if (action.aidKeyToPush) {
+                    return action;
+                }
             }
         }
         if (action.showAlert) {
@@ -182,7 +185,7 @@ class Kbd {
             else {
                 const firstSflCtrlName = SubfileController.getFirstSubfileCtrlName();
 
-                if (firstSflCtrlName) {
+                if (firstSflCtrlName && sflCtrlStore.name !== firstSflCtrlName ) {
                     const firstCtrlStore = SubfilePagingStore.getSflCtlStore(firstSflCtrlName);
                     if (firstCtrlStore) {
                         return Kbd.handleRoll(aidKey,firstCtrlStore);
