@@ -236,40 +236,7 @@ class Page {
                     }
                 }
             }
-
-            if (!postAjax) {
-                if ((aidKey === 'PgDn' || aidKey === 'PgUp') && window.asnaExpo.page.lastFocus) {
-                    const record = window.asnaExpo.page.lastFocus.closest(`[${AsnaDataAttrName.RECORD}]`);
-                    if (record) {
-                        const rollCaps = record.getAttribute(AsnaDataAttrName.RECORD_ROLLCAP);
-                        if (rollCaps) {
-                            const enabledRoll = JSON.parse(rollCaps);
-                            if (aidKey === 'PgDn' && enabledRoll.pgdn || aidKey === 'PgUp' && enabledRoll.pgup) {
-                                this.pushKey(aidKey);
-                                return;
-                            }
-                            else {
-                                const firstSflCtrlName = SubfileController.getFirstSubfileCtrlName();
-                                const firstCtrlStore = SubfilePagingStore.getSflCtlStore(firstSflCtrlName);
-                                if (firstCtrlStore) {
-                                    const recordAction = Kbd.handleRoll(aidKey, firstCtrlStore);
-                                    const sflStore = recordAction.sflCtlStore;
-                                    postAjax = recordAction.useAjax && sflStore;
-                                    if (postAjax) {
-                                        postAjax = !((aidKey === 'PgDn' || aidKey === 'PgUp') && !store.sflRecords.allowsAjax);
-                                        if (postAjax) {
-                                            this.suspendAsyncPost = true;
-                                            if (!SubfilePaging.requestPage(aidKey, firstCtrlStore, this.handleAjaxGetRecordsResponseEvent, this.handleAjaxGetRecordsErrorEvent)) {
-                                                this.suspendAsyncPost = false;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
+            else {
                 this.pushKey(aidKey);
             }
         }
