@@ -288,6 +288,10 @@ class Page {
                     return;
                 }
             }
+
+            if (!virtualRowCol && action.vRowCol) {
+                virtualRowCol = action.vRowCol;
+            }
         }
 
         if (focusElName === '*PREVIOUS') {

@@ -98,6 +98,10 @@ class Kbd {
                         return { returnBooleanValue: true }; // On a text area, <enter> should be handled by the element (in this case to possibly insert a page-break)
                     }
                     else {
+                        const keyDetails = Kbd.processNonInputCapableSubfiles('Enter');
+                        if (keyDetails) {
+                            return keyDetails;
+                        }
                         return { aidKeyToPush: 'Enter', shouldCancel: true };
                     }
 
@@ -116,18 +120,10 @@ class Kbd {
                             return sflFoldDropAction;
                         }
 
-                        const lastSflClickedRecord = SubfileController.lastClickedSflRecord();
-                        if (!Subfile.hasInputFields(lastSflClickedRecord)) {
-                            const sflCtlName = SubfileController.getClosestSubfileCtrlName(lastSflClickedRecord);
-                            if (sflCtlName) {
-                                const sflCtlStore = SubfilePagingStore.getSflCtlStore(sflCtlName);
-                                if (sflCtlStore) {
-                                    const firstNonInput = Subfile.findFirstGridElement(lastSflClickedRecord);
-                                    if (firstNonInput) {
-                                        return { aidKeyToPush: keyName, shouldCancel: true, useAjax: false, sflCtlStore: sflCtlStore, vRowCol: firstNonInput.getAttribute(AsnaDataAttrName.ROWCOL) };
-                                    }
-                                }
-                            }
+                        const keyDetails = Kbd.processNonInputCapableSubfiles(keyName);
+
+                        if (keyDetails) {
+                            return keyDetails;
                         }
 
                         return { aidKeyToPush: keyName, shouldCancel: true };
@@ -190,6 +186,24 @@ class Kbd {
             Kbd._showInvalidRollAlert();
         }
         return { returnBooleanValue: false, shouldCancel: true };
+    }
+
+    static processNonInputCapableSubfiles(aidKeyToPush) {
+        const lastSflClickedRecord = SubfileController.lastClickedSflRecord();
+        if (Subfile.hasInputFields(lastSflClickedRecord)) { return null; }
+
+        const sflCtlName = SubfileController.getClosestSubfileCtrlName(lastSflClickedRecord);
+        if (!sflCtlName) { return null; }
+
+        const sflCtlStore = SubfilePagingStore.getSflCtlStore(sflCtlName);
+        if (!sflCtlStore) { return null; }
+
+        const firstNonInput = Subfile.findFirstGridElement(lastSflClickedRecord);
+        if (firstNonInput) {
+            return { aidKeyToPush: aidKeyToPush, shouldCancel: true, useAjax: false, sflCtlStore: sflCtlStore, vRowCol: firstNonInput.getAttribute(AsnaDataAttrName.ROWCOL) };
+        }
+
+        return null;
     }
 
     static handleRoll(aidKey, sflCtrlStore, nonSflRecord) {
