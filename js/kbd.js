@@ -8,7 +8,7 @@
 export { theKbd as Kbd, FoldDrop, AidKeyHelper, AidKeyMapIndex };
 
 import { PageAlert } from '../js/page-alert.js';
-import { SubfileController } from '../js/subfile-paging/dom-init.js';
+import { SubfileController, Subfile } from '../js/subfile-paging/dom-init.js';
 import { SubfilePagingStore } from '../js/subfile-paging/paging-store.js';
 import { AsnaDataAttrName, JsonAttr } from '../js/asna-data-attr.js';
 
@@ -114,6 +114,20 @@ class Kbd {
                         const sflFoldDropAction = FoldDrop.processCadidateKey(keyName, keyDetail.target);
                         if (sflFoldDropAction) {
                             return sflFoldDropAction;
+                        }
+
+                        const lastSflClickedRecord = SubfileController.lastClickedSflRecord();
+                        if (!Subfile.hasInputFields(lastSflClickedRecord)) {
+                            const sflCtlName = SubfileController.getClosestSubfileCtrlName(lastSflClickedRecord);
+                            if (sflCtlName) {
+                                const sflCtlStore = SubfilePagingStore.getSflCtlStore(sflCtlName);
+                                if (sflCtlStore) {
+                                    const firstNonInput = Subfile.findFirstGridElement(lastSflClickedRecord);
+                                    if (firstNonInput) {
+                                        return { aidKeyToPush: keyName, shouldCancel: true, useAjax: false, sflCtlStore: sflCtlStore, vRowCol: firstNonInput.getAttribute(AsnaDataAttrName.ROWCOL) };
+                                    }
+                                }
+                            }
                         }
 
                         return { aidKeyToPush: keyName, shouldCancel: true };
@@ -343,8 +357,8 @@ class AidKeyHelper {
     }
 
     isEnabled(mapIndex) {
-        if (mapIndex < 0)    { return false; }
-        if (mapIndex === AidKeyMapIndex.Enter) { return true;  } // Always enabled.
+        if (mapIndex < 0) { return false; }
+        if (mapIndex === AidKeyMapIndex.Enter) { return true; } // Always enabled.
         return this.isAttention(mapIndex) || this.isFunction(mapIndex);
     }
 
