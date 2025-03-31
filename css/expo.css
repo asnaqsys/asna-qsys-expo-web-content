@@ -207,7 +207,8 @@ body {
 
 \*-------------------------------------------*/
 .dds-dec-field-alignment {
-    text-align: right;
+    text-align: right !important;
+    white-space: pre;
     padding-right: 0.25em;
 }
 
