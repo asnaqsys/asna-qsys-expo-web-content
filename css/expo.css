@@ -753,6 +753,57 @@ body {
 }
 
 /*-------------------------------------------*\
+    DynamicList
+
+\*-------------------------------------------*/
+.combo-dropdown-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.combo-dropdown-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.combo-dropdown-button svg {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.combo-dropdown-list {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 0 0 5px 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Style for the input field in the combo drop-down */
+.combo-dropdown-container input {
+    padding-right: 20px; /* Make room for drop-down button */
+    cursor: pointer;
+}
+
+/*-------------------------------------------*\
     Fake Data
 
 \*-------------------------------------------*/

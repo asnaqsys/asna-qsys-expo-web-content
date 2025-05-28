@@ -11,6 +11,17 @@ import { AsnaDataAttrName } from './asna-data-attr.js';
 import { Fetch } from './ajax/ajax-fetch.js';
 
 const AJAX_RESPOSE_TIMEOUT = 1 * 60 * 1000; // 1 minutes
+const DROPDOWN_BUTTON_SVG = `
+    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" 
+        height="16" width="16" 
+        viewBox="-128 -1536 1792 1792" 
+        preserveAspectRatio="xMidYMid meet">
+        <g transform="scale(1, -1)">
+            <path style="fill: blue" 
+                d="M1611 832q0 -53 -37 -90l-651 -651q-38 -38 -91 -38q-54 0 -90 38l-651 651q-38 36 -38 90q0 53 38 91l74 75q39 37 91 37q53 0 90 -37l486 -486l486 486q37 37 90 37q52 0 91 -37l75 -75q37 -39 37 -91z">
+            </path>
+        </g>
+    </svg>`; 
 
 class DynamicList {
     constructor() {
@@ -45,9 +56,6 @@ class DynamicList {
         // Create container div to hold the combo elements
         const comboContainer = document.createElement('div');
         comboContainer.className = 'combo-dropdown-container';
-        comboContainer.style.position = 'relative';
-        comboContainer.style.display = 'inline-block';
-        comboContainer.style.width = '100%';
 
         // Create the input element that will display the selected value
         const comboInput = document.createElement('input');
@@ -60,38 +68,18 @@ class DynamicList {
             }
         }
 
-        // Set specific properties for combo input
-        comboInput.style.paddingRight = '20px'; // Make room for drop-down button
+        // Set read-only property for combo input
         comboInput.setAttribute('readonly', 'readonly');
         comboInput.className = input.className;
 
-        // Create dropdown button
+        // Create drop-down button
         const dropdownButton = document.createElement('div');
         dropdownButton.className = 'combo-dropdown-button';
-        dropdownButton.innerHTML = `
-        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" 
-            style="position:absolute; right:3px; top:50%; transform:translateY(-50%); opacity:0.5" 
-            height="16" width="16" 
-            viewBox="-128 -1536 1792 1792" 
-            preserveAspectRatio="xMidYMid meet">
-            <g transform="scale(1, -1)">
-                <path style="fill: blue" 
-                    d="M1611 832q0 -53 -37 -90l-651 -651q-38 -38 -91 -38q-54 0 -90 38l-651 651q-38 36 -38 90q0 53 38 91l74 75q39 37 91 37q53 0 90 -37l486 -486l486 486q37 37 90 37q52 0 91 -37l75 -75q37 -39 37 -91z">
-                </path>
-            </g>
-        </svg>`;
+        dropdownButton.innerHTML = DROPDOWN_BUTTON_SVG;
 
         // Create the hidden drop-down list (initially empty)
         const dropdownList = document.createElement('select');
         dropdownList.className = 'combo-dropdown-list';
-        dropdownList.style.display = 'none';
-        dropdownList.style.position = 'absolute';
-        dropdownList.style.left = '0';
-        dropdownList.style.right = '0';
-        dropdownList.style.top = '100%';
-        dropdownList.style.zIndex = '1000';
-        dropdownList.style.maxHeight = '200px';
-        dropdownList.style.overflowY = 'auto';
 
         // Store reference to options for AJAX request
         dropdownList.setAttribute('data-spec-key', options.specKey);
@@ -103,7 +91,7 @@ class DynamicList {
 
         // Add event listeners
         const handleClick = function () {
-            // Toggle dropdown visibility when clicked
+            // Toggle drop-down visibility when clicked
             if (dropdownList.style.display === 'none') {
                 dropdownList.style.display = 'block';
                 // Fetch data only if the list is empty
