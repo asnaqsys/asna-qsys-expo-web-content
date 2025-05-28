@@ -32,6 +32,7 @@ import { StringExt } from '../js/string.js';
 import { PageAlert } from './page-alert.js';
 import { Signature } from './signature/signature.js';
 import { BrowserInfo } from './detection.js';
+import { DynamicList } from './dynamic-list.js';
 
 const MAIN_SELECTOR = 'main[role=main]';
 
@@ -162,6 +163,8 @@ class Page {
             main.addEventListener('click', this.handleMainPanelClickEvent, false);
         }
         this.resetLastClickOnFocus = true;
+
+        DynamicList.init();
     }
 
     static setupAutoPostback(form, aidKeyBitmap) {

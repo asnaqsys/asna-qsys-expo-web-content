@@ -51,14 +51,14 @@ const AsnaDataAttrName = {
     ICON_INTERNAL_COLOR: 'data-asna-icon-color', // (internal and volatile)
     ICON_INTERNAL_TITLE: 'data-asna-icon-title', // (internal and volatile)
 
-    // Checkboxes
+    // Check-boxes
     CHECKBOX_OPTIONS: 'data-asna-checkbox-options',
 
     // Radio Button group
     RADIO_BUTTON_GROUP_OPTIONS: 'data-asna-radio-group-options',
 
     // Signature
-    SIGNATURE_OPTIONS: 'data-asna-aignature-options',
+    SIGNATURE_OPTIONS: 'data-asna-signature-options',
     SIGNATURE_INTERNAL_NAME: 'data-asna-signature-name', // (internal and volatile)
 
     // Message related
@@ -73,6 +73,9 @@ const AsnaDataAttrName = {
 
     // Barcode fields
     DETECT_BARCODE: 'data-asna-barcode',
+
+    // DynamicList
+    DYNAMIC_LIST_OPTIONS: 'data-asna-dynamic-list',
 
     // Misc
     AUTO_POSTBACK: 'data-asna-autopostback',
