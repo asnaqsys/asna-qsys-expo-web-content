@@ -118,7 +118,7 @@ class DynamicList {
     }
 
     handleClickEvent(event) {
-        // Toggle dropdown visibility when clicked
+        // Toggle drop-down visibility when clicked
         if (this.dropdownList.style.display === 'none') {
             this.dropdownList.style.display = 'block';
             // Fetch data only if the list is empty
