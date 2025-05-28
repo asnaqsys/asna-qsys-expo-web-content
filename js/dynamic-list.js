@@ -168,7 +168,10 @@ class DynamicList {
             dynamicListID: this.listID,
         };
 
-        data.elementsValues = 'A';  // First element is the currently selected value
+        // Get the currently selected value from the input field
+        // If no value is present, use '' (empty) as a default/initial value.
+        const currentValue = this.comboInput && this.comboInput.value ? this.comboInput.value.trim() : '';
+        data.elementsValues = currentValue;
 
         // Using 'this' inside the fetch callbacks
         const self = this;
@@ -185,5 +188,6 @@ class DynamicList {
                 console.error(`Request List Values failed error:${err}`);
             });
     }
+
 }
 
