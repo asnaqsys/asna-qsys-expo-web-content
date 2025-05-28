@@ -27,7 +27,15 @@ class DynamicList {
     constructor() {
         this.specKey = '';
         this.arrayControlIDs = [];
-        this.handleMouseClickEvent = this.handleMouseClickEvent.bind(this);
+        this.listID = ''; // Added to store the list ID for AJAX requests
+        this.comboInput = null; // Reference to the input element
+        this.dropdownList = null; // Reference to the select element
+
+        // Bind all handlers to this instance
+        this.handleClickEvent = this.handleClickEvent.bind(this);
+        this.handleDropdownChangeEvent = this.handleDropdownChangeEvent.bind(this);
+        this.handleOutsideClickEvent = this.handleOutsideClickEvent.bind(this);
+        this.handleAjaxResponseEvent = this.handleAjaxResponseEvent.bind(this);
     }
 
     static init() {
@@ -46,12 +54,14 @@ class DynamicList {
             }
             DynamicList.replaceInputWithComboDropdownList(input, options);
         }
-
     }
 
     static replaceInputWithComboDropdownList(input, options) {
-        this.specKey = options.specKey;
-        this.arrayControlIDs = options.arrayControlIDs;
+        // Create a new DynamicList instance for this control
+        const dynList = new DynamicList();
+        dynList.specKey = options.specKey;
+        dynList.arrayControlIDs = options.arrayControlIDs;
+        dynList.listID = options.specKey; // Assuming specKey can be used as listID
 
         // Create container div to hold the combo elements
         const comboContainer = document.createElement('div');
@@ -71,6 +81,7 @@ class DynamicList {
         // Set read-only property for combo input
         comboInput.setAttribute('readonly', 'readonly');
         comboInput.className = input.className;
+        dynList.comboInput = comboInput; // Store reference to the input
 
         // Create drop-down button
         const dropdownButton = document.createElement('div');
@@ -80,45 +91,20 @@ class DynamicList {
         // Create the hidden drop-down list (initially empty)
         const dropdownList = document.createElement('select');
         dropdownList.className = 'combo-dropdown-list';
+        dropdownList.style.display = 'none';
+        dynList.dropdownList = dropdownList; // Store reference to the drop-down
 
         // Store reference to options for AJAX request
         dropdownList.setAttribute('data-spec-key', options.specKey);
 
-        // Create dynamic list instance for event handling
-        const dynList = new DynamicList();
-        dynList.specKey = options.specKey;
-        dynList.arrayControlIDs = options.arrayControlIDs;
+        // Store reference to container for outside click detection
+        dynList.comboContainer = comboContainer;
 
         // Add event listeners
-        const handleClick = function () {
-            // Toggle drop-down visibility when clicked
-            if (dropdownList.style.display === 'none') {
-                dropdownList.style.display = 'block';
-                // Fetch data only if the list is empty
-                if (dropdownList.options.length === 0) {
-                    dynList.requestListValues();
-                }
-            } else {
-                dropdownList.style.display = 'none';
-            }
-        };
-
-        comboInput.addEventListener('click', handleClick);
-        dropdownButton.addEventListener('click', handleClick);
-
-        dropdownList.addEventListener('change', function () {
-            if (this.selectedIndex >= 0) {
-                comboInput.value = this.options[this.selectedIndex].text;
-                dropdownList.style.display = 'none';
-            }
-        });
-
-        // Add click outside handler to close drop-down
-        document.addEventListener('click', function (event) {
-            if (!comboContainer.contains(event.target)) {
-                dropdownList.style.display = 'none';
-            }
-        });
+        comboInput.addEventListener('click', dynList.handleClickEvent);
+        dropdownButton.addEventListener('click', dynList.handleClickEvent);
+        dropdownList.addEventListener('change', dynList.handleDropdownChangeEvent);
+        document.addEventListener('click', dynList.handleOutsideClickEvent);
 
         // Assemble the combo drop-down component
         comboContainer.appendChild(comboInput);
@@ -128,36 +114,76 @@ class DynamicList {
         // Replace the original input with the combo container
         input.parentNode.replaceChild(comboContainer, input);
 
-        // Return the dynamic list instance (can be used to add custom event handlers)
         return dynList;
     }
 
+    handleClickEvent(event) {
+        // Toggle dropdown visibility when clicked
+        if (this.dropdownList.style.display === 'none') {
+            this.dropdownList.style.display = 'block';
+            // Fetch data only if the list is empty
+            if (this.dropdownList.options.length === 0) {
+                this.requestListValues();
+            }
+        } else {
+            this.dropdownList.style.display = 'none';
+        }
+    }
 
-    handleMouseClickEvent(event) {
-        this.requestListValues();
+    handleDropdownChangeEvent(event) {
+        if (this.dropdownList.selectedIndex >= 0) {
+            this.comboInput.value = this.dropdownList.options[this.dropdownList.selectedIndex].text;
+            this.dropdownList.style.display = 'none';
+        }
+    }
+
+    handleOutsideClickEvent(event) {
+        if (this.comboContainer && !this.comboContainer.contains(event.target)) {
+            this.dropdownList.style.display = 'none';
+        }
+    }
+
+    handleAjaxResponseEvent(jsonStr) {
+        // Process the AJAX response here
+        // This would typically involve populating the drop-down with options
+        if (jsonStr && jsonStr.items && Array.isArray(jsonStr.items)) {
+            // Clear existing options
+            while (this.dropdownList.firstChild) {
+                this.dropdownList.removeChild(this.dropdownList.firstChild);
+            }
+
+            // Add new options
+            jsonStr.items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.value || '';
+                option.text = item.text || '';
+                this.dropdownList.appendChild(option);
+            });
+        }
     }
 
     requestListValues() {
         const data = {
             action: 'getDynamicListItems',
-            dynamicListID: listID,
+            dynamicListID: this.listID,
         };
 
         data.elementsValues = 'A';  // First element is the currently selected value
 
+        // Using 'this' inside the fetch callbacks
+        const self = this;
+
         Fetch.fetchWithTimeout(decodeURI(document.URL), data, AJAX_RESPOSE_TIMEOUT)
             .then(function (response) {
                 response.json().then(function (jsonStr) {
-                    ajaxRespEventHandler(jsonStr);
-                }
-                ).catch(function (err) {
+                    self.handleAjaxResponseEvent(jsonStr);
+                }).catch(function (err) {
                     console.error(`JSON decode error:${err}`);
                 });
-            }
-            ).
-            catch(function (err) {
+            })
+            .catch(function (err) {
                 console.error(`Request List Values failed error:${err}`);
-            }
-        );
+            });
     }
 }
+
