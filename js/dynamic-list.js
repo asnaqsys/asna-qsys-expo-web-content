@@ -144,22 +144,37 @@ class DynamicList {
         }
     }
 
-    handleAjaxResponseEvent(jsonStr) {
-        // Process the AJAX response here
-        // This would typically involve populating the drop-down with options
-        if (jsonStr && jsonStr.items && Array.isArray(jsonStr.items)) {
-            // Clear existing options
-            while (this.dropdownList.firstChild) {
-                this.dropdownList.removeChild(this.dropdownList.firstChild);
+    handleAjaxResponseEvent(json) {
+        // Clear existing options
+        while (this.dropdownList.firstChild) {
+            this.dropdownList.removeChild(this.dropdownList.firstChild);
+        }
+
+        if (json && typeof json.theList === 'string') {
+            const lines = json.theList.split('\r\n');
+            for (let line of lines) {
+                if (!line.trim()) continue; // skip empty lines
+                const cols = line.split('\u0009');
+                if (cols.length < 3) continue; // skip malformed lines
+
+                const value = cols[0];
+                const isSelected = cols[1].trim().toLowerCase() === 'selected';
+                const text = cols[2];
+
+                const option = document.createElement('option');
+                option.value = value;
+                option.text = text;
+                if (isSelected) {
+                    option.selected = true;
+                }
+                this.dropdownList.appendChild(option);
             }
 
-            // Add new options
-            jsonStr.items.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.value || '';
-                option.text = item.text || '';
-                this.dropdownList.appendChild(option);
-            });
+            // Set the input value to the selected option's text, if any
+            const selectedOption = this.dropdownList.selectedOptions[0]; // Accessing [0] on an empty collection is safe (returns undefined)
+            if (selectedOption) {
+                this.comboInput.value = selectedOption.text;
+            }
         }
     }
 
