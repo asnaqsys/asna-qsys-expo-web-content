@@ -9,6 +9,7 @@ export { DynamicList };
 
 import { AsnaDataAttrName } from './asna-data-attr.js';
 import { Fetch } from './ajax/ajax-fetch.js';
+import { Base64 } from './base-64.js';
 
 const AJAX_RESPOSE_TIMEOUT = 1 * 60 * 1000; // 1 minutes
 const DROPDOWN_BUTTON_SVG = `
@@ -38,7 +39,7 @@ class DynamicList {
         this.handleAjaxResponseEvent = this.handleAjaxResponseEvent.bind(this);
     }
 
-    static init() {
+    static init(form) {
         const elements = form.querySelectorAll(`input[${AsnaDataAttrName.DYNAMIC_LIST_OPTIONS}]`);
 
         for (let i = 0, l = elements.length; i < l; i++) {

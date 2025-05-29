@@ -164,7 +164,7 @@ class Page {
         }
         this.resetLastClickOnFocus = true;
 
-        DynamicList.init();
+        DynamicList.init(thisForm);
     }
 
     static setupAutoPostback(form, aidKeyBitmap) {
