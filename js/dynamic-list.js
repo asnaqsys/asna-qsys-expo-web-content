@@ -22,7 +22,7 @@ const DROPDOWN_BUTTON_SVG = `
                 d="M1611 832q0 -53 -37 -90l-651 -651q-38 -38 -91 -38q-54 0 -90 38l-651 651q-38 36 -38 90q0 53 38 91l74 75q39 37 91 37q53 0 90 -37l486 -486l486 486q37 37 90 37q52 0 91 -37l75 -75q37 -39 37 -91z">
             </path>
         </g>
-    </svg>`; 
+    </svg>`;
 
 class DynamicList {
     constructor() {
@@ -31,9 +31,11 @@ class DynamicList {
         this.listID = ''; // Added to store the list ID for AJAX requests
         this.comboInput = null; // Reference to the input element
         this.dropdownList = null; // Reference to the select element
+        this.targetField = null; // Target field to sync with
 
         // Bind all handlers to this instance
         this.handleClickEvent = this.handleClickEvent.bind(this);
+        this.handleKeyDownEvent = this.handleKeyDownEvent.bind(this);
         this.handleDropdownChangeEvent = this.handleDropdownChangeEvent.bind(this);
         this.handleOutsideClickEvent = this.handleOutsideClickEvent.bind(this);
         this.handleAjaxResponseEvent = this.handleAjaxResponseEvent.bind(this);
@@ -51,7 +53,7 @@ class DynamicList {
                 options = JSON.parse(Base64.decode(encOptions));
             }
             catch (ex) {
-                // alert(ex);
+                console.error('Error decoding dynamic list options:', ex);
             }
             DynamicList.replaceInputWithComboDropdownList(input, options);
         }
@@ -64,6 +66,11 @@ class DynamicList {
         dynList.arrayControlIDs = options.arrayControlIDs;
         dynList.listID = options.specKey; // Assuming specKey can be used as listID
 
+        // Store target field if provided
+        if (options.targetField) {
+            dynList.targetField = document.querySelector(`[name="${options.targetField}"]`);
+        }
+
         // Create container div to hold the combo elements
         const comboContainer = document.createElement('div');
         comboContainer.className = 'combo-dropdown-container';
@@ -71,17 +78,22 @@ class DynamicList {
         // Create the input element that will display the selected value
         const comboInput = document.createElement('input');
 
-        // Copy all attributes from original input
+        // Copy all attributes from original input, except style
         for (let i = 0; i < input.attributes.length; i++) {
             const attr = input.attributes[i];
-            if (attr.name !== AsnaDataAttrName.DYNAMIC_LIST_OPTIONS) {
+            if (attr.name !== AsnaDataAttrName.DYNAMIC_LIST_OPTIONS && attr.name.toLowerCase() !== 'style') {
                 comboInput.setAttribute(attr.name, attr.value);
+            }
+            // Apply style to container instead
+            else if (attr.name.toLowerCase() === 'style') {
+                comboContainer.setAttribute('style', attr.value);
             }
         }
 
         // Set read-only property for combo input
         comboInput.setAttribute('readonly', 'readonly');
         comboInput.className = input.className;
+        comboInput.style.cursor = 'pointer';
         dynList.comboInput = comboInput; // Store reference to the input
 
         // Create drop-down button
@@ -93,6 +105,7 @@ class DynamicList {
         const dropdownList = document.createElement('select');
         dropdownList.className = 'combo-dropdown-list';
         dropdownList.style.display = 'none';
+        dropdownList.size = 5; // Show 5 options at a time for better visibility
         dynList.dropdownList = dropdownList; // Store reference to the drop-down
 
         // Store reference to options for AJAX request
@@ -103,8 +116,10 @@ class DynamicList {
 
         // Add event listeners
         comboInput.addEventListener('click', dynList.handleClickEvent);
+        comboInput.addEventListener('keydown', dynList.handleKeyDownEvent);
         dropdownButton.addEventListener('click', dynList.handleClickEvent);
         dropdownList.addEventListener('change', dynList.handleDropdownChangeEvent);
+        dropdownList.addEventListener('keydown', dynList.handleKeyDownEvent);
         document.addEventListener('click', dynList.handleOutsideClickEvent);
 
         // Assemble the combo drop-down component
@@ -115,31 +130,140 @@ class DynamicList {
         // Replace the original input with the combo container
         input.parentNode.replaceChild(comboContainer, input);
 
+        // Immediately fetch the dropdown data
+        dynList.requestListValues();
+
         return dynList;
     }
 
-    handleClickEvent(event) {
-        // Toggle drop-down visibility when clicked
-        if (this.dropdownList.style.display === 'none') {
-            this.dropdownList.style.display = 'block';
-            // Fetch data only if the list is empty
-            if (this.dropdownList.options.length === 0) {
-                this.requestListValues();
-            }
-        } else {
-            this.dropdownList.style.display = 'none';
+    handleKeyDownEvent(event) {
+        // Handle keyboard navigation
+        switch (event.key) {
+            case 'ArrowDown':
+            case 'Down':
+                if (this.dropdownList.style.display === 'none') {
+                    this.showDropdown();
+                } else {
+                    // Select next option
+                    let nextIndex = this.dropdownList.selectedIndex + 1;
+                    if (nextIndex < this.dropdownList.options.length) {
+                        this.dropdownList.selectedIndex = nextIndex;
+                        this.dropdownList.options[nextIndex].scrollIntoView({ block: 'nearest' });
+                    }
+                }
+                event.preventDefault();
+                break;
+
+            case 'ArrowUp':
+            case 'Up':
+                if (this.dropdownList.style.display === 'none') {
+                    this.showDropdown();
+                } else {
+                    // Select previous option
+                    let prevIndex = this.dropdownList.selectedIndex - 1;
+                    if (prevIndex >= 0) {
+                        this.dropdownList.selectedIndex = prevIndex;
+                        this.dropdownList.options[prevIndex].scrollIntoView({ block: 'nearest' });
+                    }
+                }
+                event.preventDefault();
+                break;
+
+            case 'Enter':
+                if (this.dropdownList.style.display !== 'none') {
+                    if (this.dropdownList.selectedIndex >= 0) {
+                        // Update the input value with the selected text
+                        this.comboInput.value = this.dropdownList.options[this.dropdownList.selectedIndex].text;
+                        // Update target field if specified
+                        this.updateTargetField();
+                        // Hide the dropdown
+                        this.hideDropdown();
+                    }
+                    event.preventDefault();
+                } else {
+                    this.showDropdown();
+                    event.preventDefault();
+                }
+                break;
+
+            case 'Escape':
+            case 'Esc':
+                if (this.dropdownList.style.display !== 'none') {
+                    this.hideDropdown();
+                    event.preventDefault();
+                }
+                break;
+
+            case ' ': // Space
+                if (document.activeElement === this.comboInput) {
+                    this.toggleDropdown();
+                    event.preventDefault();
+                }
+                break;
         }
+    }
+
+    showDropdown() {
+        // Show the dropdown
+        this.dropdownList.style.display = 'block';
+
+        // Fetch data if needed
+        if (this.dropdownList.options.length === 0) {
+            this.requestListValues();
+        }
+
+        // Focus the dropdown list for keyboard navigation
+        setTimeout(() => {
+            this.dropdownList.focus();
+
+            // Scroll to selected option if any
+            if (this.dropdownList.selectedIndex >= 0) {
+                this.dropdownList.options[this.dropdownList.selectedIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }, 10);
+    }
+
+    hideDropdown() {
+        this.dropdownList.style.display = 'none';
+    }
+
+    toggleDropdown() {
+        if (this.dropdownList.style.display === 'none') {
+            this.showDropdown();
+        } else {
+            this.hideDropdown();
+        }
+    }
+
+    updateTargetField() {
+        if (this.targetField && this.dropdownList.selectedIndex >= 0) {
+            this.targetField.value = this.dropdownList.options[this.dropdownList.selectedIndex].value;
+        }
+    }
+
+    handleClickEvent(event) {
+        // Prevent the click from propagating to document to avoid immediate close
+        event.stopPropagation();
+        this.toggleDropdown();
     }
 
     handleDropdownChangeEvent(event) {
         if (this.dropdownList.selectedIndex >= 0) {
+            // Update the input value with the selected text
             this.comboInput.value = this.dropdownList.options[this.dropdownList.selectedIndex].text;
+
+            // Update target field if specified
+            this.updateTargetField();
+
+            // Hide the dropdown without forcing focus back to input
             this.dropdownList.style.display = 'none';
         }
     }
 
     handleOutsideClickEvent(event) {
+        // Only hide the dropdown if the click was outside the container
         if (this.comboContainer && !this.comboContainer.contains(event.target)) {
+            // Just hide the dropdown without forcing focus
             this.dropdownList.style.display = 'none';
         }
     }
@@ -171,9 +295,12 @@ class DynamicList {
             }
 
             // Set the input value to the selected option's text, if any
-            const selectedOption = this.dropdownList.selectedOptions[0]; // Accessing [0] on an empty collection is safe (returns undefined)
+            const selectedOption = this.dropdownList.selectedOptions[0];
             if (selectedOption) {
                 this.comboInput.value = selectedOption.text;
+
+                // Update target field if specified
+                this.updateTargetField();
             }
         }
     }
@@ -185,7 +312,6 @@ class DynamicList {
         };
 
         // Get the currently selected value from the input field
-        // If no value is present, use '' (empty) as a default/initial value.
         const currentValue = this.comboInput && this.comboInput.value ? this.comboInput.value.trim() : '';
         data.elementsValues = currentValue;
 
@@ -204,6 +330,4 @@ class DynamicList {
                 console.error(`Request List Values failed error:${err}`);
             });
     }
-
 }
-
