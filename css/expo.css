@@ -466,34 +466,34 @@ body {
     border-spacing: 0px; /* Similar to border-collapse: collapse (collapse has issue with sticky headers)*/
 }
 
-    .dds-table td {
-        font-size: calc( var(--body-font-size) * 0.75 );
-        padding: 2px;
-        vertical-align: baseline;
-        border: 1px solid lightgray;
-    }
+.dds-table td {
+    font-size: calc( var(--body-font-size) * 0.75 );
+    padding: 2px;
+    vertical-align: baseline;
+    border: 1px solid lightgray;
+}
 
-    .dds-table th {
-        font-size: calc( var(--body-font-size) * 0.8 );
-        font-weight: normal;
-        padding: 4px;
-        color: blue;
-        border: 1px solid lightgray;
-        /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#ffffff+0,e5e5e5+100;White+3D */
-        background: #ffffff; /* Old browsers */
-        background: -moz-linear-gradient(top, #ffffff 0%, #e5e5e5 100%); /* FF3.6-15 */
-        background: -webkit-linear-gradient(top, #ffffff 0%,#e5e5e5 100%); /* Chrome10-25,Safari5.1-6 */
-        background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-    }
+.dds-table th {
+    font-size: calc( var(--body-font-size) * 0.8 );
+    font-weight: normal;
+    padding: 4px;
+    color: blue;
+    border: 1px solid lightgray;
+    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#ffffff+0,e5e5e5+100;White+3D */
+    background: #ffffff; /* Old browsers */
+    background: -moz-linear-gradient(top, #ffffff 0%, #e5e5e5 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, #ffffff 0%,#e5e5e5 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
 
-    .dds-table tbody {
-        background-color: whitesmoke;
-    }
+.dds-table tbody {
+    background-color: whitesmoke;
+}
 
-    .dds-table thead th {
-        position: sticky;
-        top: -1px;
-    }
+.dds-table thead th {
+    position: sticky;
+    top: -1px;
+}
 
 /*-------------------------------------------*\
     Message Panel (server and client validation).
@@ -506,27 +506,27 @@ body {
     height: calc(1.2 * calc( var(--body-font-size) * 0.8 ));
 }
 
-    .dds-message-panel ul {
-        list-style-type: none;
-        margin: 0;
-        margin-left: 1em;
-        font-size: calc( var(--body-font-size) * 0.8 );
-        padding: 0;
-    }
+.dds-message-panel ul {
+    list-style-type: none;
+    margin: 0;
+    margin-left: 1em;
+    font-size: calc( var(--body-font-size) * 0.8 );
+    padding: 0;
+}
 
-    .dds-message-panel:not(:empty) { /* When there are messages, the panel overlaps the last row on the Page (similar to 5250) */
-        position: relative;
-        background: beige;
-        bottom: var(--body-font-size);
-        height: calc( var(--body-font-size) * 0.8 );
-        border: var(--popup-border-width) solid;
-        border-radius: 5px;
-        border-color: orange;
-        border-width: medium;
-        padding-top: 2px;
-        padding-bottom: 2px;
-        overflow: auto;
-    }
+.dds-message-panel:not(:empty) { /* When there are messages, the panel overlaps the last row on the Page (similar to 5250) */
+    position: relative;
+    background: beige;
+    bottom: var(--body-font-size);
+    height: calc( var(--body-font-size) * 0.8 );
+    border: var(--popup-border-width) solid;
+    border-radius: 5px;
+    border-color: orange;
+    border-width: medium;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    overflow: auto;
+}
 
 /*-------------------------------------------*\
     DdsContextMenu
@@ -554,38 +554,38 @@ body {
     border: 1px solid #dedede;
 }
 
-    .dds-menu > ul > li > button {
-        padding: 0.2rem 0.8rem;
-        width: 100%;
-        font-size: calc( var(--body-font-size) * 0.75 );
-        font-family: var(--body-font-family);
-        -webkit-appearance: button;
-        -moz-appearance: button;
-        text-transform: none;
-        line-height: 1.15;
-        margin: 0;
-        overflow: visible;
-        border: 0;
-        text-align: left;
-        outline: none;
-        cursor: pointer;
-        background: transparent;
-    }
+.dds-menu > ul > li > button {
+    padding: 0.2rem 0.8rem;
+    width: 100%;
+    font-size: calc( var(--body-font-size) * 0.75 );
+    font-family: var(--body-font-family);
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    text-transform: none;
+    line-height: 1.15;
+    margin: 0;
+    overflow: visible;
+    border: 0;
+    text-align: left;
+    outline: none;
+    cursor: pointer;
+    background: transparent;
+}
 
-    .dds-menu > ul {
-        list-style: none;
-        margin: 0;
-        padding: 0.5em;
-    }
+.dds-menu > ul {
+    list-style: none;
+    margin: 0;
+    padding: 0.5em;
+}
 
-        .dds-menu > ul > li {
-            padding: 0;
-        }
+.dds-menu > ul > li {
+    padding: 0;
+}
 
-            .dds-menu > ul > li:hover {
-                background-color: lightgray;
-                font-weight: 600;
-            }
+.dds-menu > ul > li:hover {
+    background-color: lightgray;
+    font-weight: 600;
+}
 
 .dds-menu-divider {
     margin-top: -0.3em;
@@ -759,7 +759,9 @@ body {
 .combo-dropdown-container {
     position: relative;
     display: inline-block;
+    font-size: calc( var(--body-font-size) * 0.75 );
     width: 100%;
+    cursor: pointer;
 }
 
 .combo-dropdown-button {
@@ -767,9 +769,6 @@ body {
     right: 0;
     top: 0;
     height: 100%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
     justify-content: center;
 }
 
@@ -787,20 +786,15 @@ body {
     position: absolute;
     left: 0;
     right: 0;
-    top: 100%;
+    top: 0;
     z-index: 1000;
-    max-height: 200px;
+    height:100%;
     overflow-y: auto;
     border: 1px solid #ccc;
     background-color: white;
     border-radius: 0 0 5px 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Style for the input field in the combo drop-down */
-.combo-dropdown-container input {
-    padding-right: 20px; /* Make room for drop-down button */
-    cursor: pointer;
+    width: fit-content;
 }
 
 /*-------------------------------------------*\
