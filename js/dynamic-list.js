@@ -196,6 +196,11 @@ class DynamicList {
             this.dropdownButton.style.display = 'none';
         }
 
+        // Ensure dropdown is visible with multiple rows
+        this.dropdownList.setAttribute('size', this.dropdownList.options.length || 5);
+        this.dropdownList.style.height = 'auto';
+        this.dropdownList.style.overflow = 'visible';
+
         // Fetch data if needed
         if (this.dropdownList.options.length === 0) {
             this.requestListValues();
@@ -301,6 +306,8 @@ class DynamicList {
             }
 
             // Show the dropdown after populating it with data
+            // Update the size attribute to match the number of options
+            this.dropdownList.setAttribute('size', this.dropdownList.options.length || 5);
             this.showDropdown();
         }
     }
