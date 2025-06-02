@@ -27,7 +27,7 @@ const DROPDOWN_BUTTON_SVG = `
 class DynamicList {
     constructor() {
         this.specKey = '';
-        this.arrayControlIDs = [];
+        this.arrayControlIDs = '';
         this.listID = ''; // Added to store the list ID for AJAX requests
         this.dropdownList = null; // Reference to the select element
         this.targetField = null; // Target field to sync with
@@ -74,7 +74,7 @@ class DynamicList {
         // Create a new DynamicList instance for this control
         const dynList = new DynamicList();
         dynList.specKey = options.specKey;
-        dynList.arrayControlIDs = options.arrayControlIDs;
+        dynList.arrayControlIDs = options.arrayControlIDs; // Not used yet !!!
         dynList.listID = options.specKey; // Assuming specKey can be used as listID
 
         // Store target field if provided
@@ -183,13 +183,6 @@ class DynamicList {
                     this.hideDropdown();
                     event.preventDefault();
                 }
-                break;
-
-            case ' ': // Space
-                //if (document.activeElement === this.comboInput) {
-                //    this.toggleDropdown();
-                //    event.preventDefault();
-                //}
                 break;
         }
     }
@@ -306,6 +299,9 @@ class DynamicList {
             if (selectedOption) {
                 this.updateTargetField();
             }
+
+            // Show the dropdown after populating it with data
+            this.showDropdown();
         }
     }
 
