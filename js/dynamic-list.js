@@ -27,7 +27,7 @@ const DROPDOWN_BUTTON_SVG = `
 class DynamicList {
     constructor() {
         this.specKey = '';
-        this.arrayControlIDs = '';
+        this.csvControlIDs = '';
         this.listID = ''; // Added to store the list ID for AJAX requests
         this.dropdownList = null; // Reference to the select element
         this.targetField = null; // Target field to sync with
@@ -74,7 +74,7 @@ class DynamicList {
         // Create a new DynamicList instance for this control
         const dynList = new DynamicList();
         dynList.specKey = options.specKey;
-        dynList.arrayControlIDs = options.arrayControlIDs; // Not used yet !!!
+        dynList.csvControlIDs = options.arrayControlIDs; // Not used yet !!!
         dynList.listID = options.specKey; // Assuming specKey can be used as listID
 
         // Store target field if provided
@@ -84,7 +84,7 @@ class DynamicList {
 
         // Create container div to hold the combo elements
         const comboContainer = document.createElement('div');
-        comboContainer.className = 'combo-dropdown-container';
+        comboContainer.className = 'dds-dynalist-combo-dropdown-container';
 
         // Copy all attributes from original input, except style
         for (let i = 0; i < input.attributes.length; i++) {
@@ -96,7 +96,7 @@ class DynamicList {
 
         // Create drop-down button
         const dropdownButton = document.createElement('div');
-        dropdownButton.className = 'combo-dropdown-button';
+        dropdownButton.className = 'dds-dynalist-combo-dropdown-button';
         dropdownButton.innerHTML = DROPDOWN_BUTTON_SVG;
         dropdownButton.style.cursor = 'pointer';
         dropdownButton.style.display = 'block'; // Initially visible
@@ -104,7 +104,7 @@ class DynamicList {
 
         // Create the hidden drop-down list (initially empty)
         const dropdownList = document.createElement('select');
-        dropdownList.className = 'combo-dropdown-list';
+        dropdownList.className = 'dds-dynalist-combo-dropdown-list';
         dropdownList.style.display = 'none';
         dropdownList.size = options.optionsVisible;
         dynList.dropdownList = dropdownList; // Store reference to the drop-down
