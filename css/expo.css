@@ -799,6 +799,24 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     width: fit-content;
 }
+
+.dds-dynalist-combo-dropdown-list option:hover,
+.dds-dynalist-combo-dropdown-list option.option-hover {
+    background-color: #ddd;
+    cursor: pointer;
+}
+
+.dds-dynalist-combo-dropdown-list option.hover-selection {
+    background-color: #e6e6e6;
+    color: #333;
+}
+
+.dds-dynalist-combo-dropdown-list option:checked,
+.dds-dynalist-combo-dropdown-list option:selected {
+    background-color: rgba(0, 255, 127, 0.5);
+    color: black;
+}
+
 /*-------------------------------------------*\
     Fake Data
 

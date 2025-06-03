@@ -107,6 +107,18 @@ class DynamicList {
         dropdownList.className = 'dds-dynalist-combo-dropdown-list';
         dropdownList.style.display = 'none';
         dropdownList.size = options.optionsVisible;
+
+        dropdownList.addEventListener('mouseover', (event) => {
+            if (event.target.tagName === 'OPTION') {
+                // Remove hover class from all options
+                Array.from(dropdownList.options).forEach(opt => {
+                    opt.classList.remove('hover-selection');
+                });
+                // Add hover class to current option
+                event.target.classList.add('hover-selection');
+            }
+        });
+
         dynList.dropdownList = dropdownList; // Store reference to the drop-down
 
         // Store reference to container for outside click detection
@@ -142,6 +154,7 @@ class DynamicList {
                     if (nextIndex < this.dropdownList.options.length) {
                         this.dropdownList.selectedIndex = nextIndex;
                         this.dropdownList.options[nextIndex].scrollIntoView({ block: 'nearest' });
+                        this.updateTargetField();
                     }
                 }
                 event.preventDefault();
@@ -157,23 +170,60 @@ class DynamicList {
                     if (prevIndex >= 0) {
                         this.dropdownList.selectedIndex = prevIndex;
                         this.dropdownList.options[prevIndex].scrollIntoView({ block: 'nearest' });
+                        this.updateTargetField();
                     }
                 }
                 event.preventDefault();
                 break;
 
+            case ' ':  // Space key
+            case 'Spacebar':  // For older browsers
+                if (this.dropdownList.style.display !== 'none') {
+                    // Find the option with hover-selection class
+                    const hoveredOption = Array.from(this.dropdownList.options).find(opt =>
+                        opt.classList.contains('hover-selection'));
+
+                    if (hoveredOption) {
+                        // Set the selected index to the hovered option
+                        this.dropdownList.selectedIndex = Array.from(this.dropdownList.options).indexOf(hoveredOption);
+                    }
+
+                    // Now update target field with current selection
+                    if (this.dropdownList.selectedIndex >= 0) {
+                        this.updateTargetField();
+                        this.hideDropdown();
+                        event.preventDefault();
+                    }
+                }
+                break;
+
             case 'Enter':
                 if (this.dropdownList.style.display !== 'none') {
+                    // Similar logic as space - check for hover-selection first
+                    const hoveredOption = Array.from(this.dropdownList.options).find(opt =>
+                        opt.classList.contains('hover-selection'));
+
+                    if (hoveredOption) {
+                        // Set the selected index to the hovered option
+                        this.dropdownList.selectedIndex = Array.from(this.dropdownList.options).indexOf(hoveredOption);
+                    }
+
                     if (this.dropdownList.selectedIndex >= 0) {
                         // Update target field if specified
-                        this.updateTargetField(this.dropdownList.options[this.dropdownList.selectedIndex].action);
+                        this.updateTargetField();
                         // Hide the dropdown
                         this.hideDropdown();
                     }
+
+                    // Stop propagation to prevent the form submission
+                    event.stopPropagation();
                     event.preventDefault();
+                    return false; // This ensures the event doesn't bubble up
                 } else {
                     this.showDropdown();
+                    event.stopPropagation();
                     event.preventDefault();
+                    return false;
                 }
                 break;
 
@@ -296,6 +346,14 @@ class DynamicList {
                 if (isSelected) {
                     option.selected = true;
                 }
+
+                option.addEventListener('mouseover', () => {
+                    Array.from(this.dropdownList.options).forEach(opt => {
+                        opt.classList.remove('hover-selection');
+                    });
+                    option.classList.add('hover-selection');
+                });
+
                 this.dropdownList.appendChild(option);
             }
 
