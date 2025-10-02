@@ -170,7 +170,7 @@ class Page {
     static setupAutoPostback(form, aidKeyBitmap) {
         const autoPBEls = form.querySelectorAll(`[${AsnaDataAttrName.AUTO_POSTBACK}]`);
 
-        const aidKeyHelper = new AidKeyHelper(aidKeyBitmap);
+        const aidKeyHelper = new AidKeyHelper(form, aidKeyBitmap);
 
         autoPBEls.forEach((el) => {
             const key = el.getAttribute(AsnaDataAttrName.AUTO_POSTBACK);
@@ -234,7 +234,7 @@ class Page {
             return false; // Ignore
         }
 
-        const action = Kbd.processKeyDown(event, this.aidKeyBitmap);
+        const action = Kbd.processKeyDown(this.getForm(), event, this.aidKeyBitmap);
         const aidKey = action.aidKeyToPush;
 
         if (aidKey) {
@@ -264,7 +264,7 @@ class Page {
         }
 
         if (action.returnBooleanValue) {
-            return action.ReturnBooleanValue;
+            return action.returnBooleanValue;
         }
     }
 
@@ -277,7 +277,7 @@ class Page {
             if (!keyDetail.target && event && event.target) {
                 keyDetail.target = event.target;
             }
-            const action = Kbd.processKeyDetail(keyDetail, this.aidKeyBitmap);
+            const action = Kbd.processKeyDetail(this.getForm(), keyDetail, this.aidKeyBitmap);
             const aidKey = action.aidKeyToPush;
             const store = action.sflCtlStore;
 
@@ -353,7 +353,7 @@ class Page {
         // console.log(`AJAX response. ${res.request.recordName} Requested from:${res.request.from} to:${res.request.to} Got ${res.recordCount}`);
 
         if (res.recordCount <= 0) {
-            const aidKeyHelper = new AidKeyHelper(this.aidKeyBitmap);
+            const aidKeyHelper = new AidKeyHelper(this.getForm(), this.aidKeyBitmap);
 
             if (res.request.requestorAidKey === "PgDn" && aidKeyHelper.isEnabled(AidKeyMapIndex.PageDown) ||
                 res.request.requestorAidKey === "PgUp" && aidKeyHelper.isEnabled(AidKeyMapIndex.PageUp)) {

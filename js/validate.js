@@ -89,7 +89,7 @@ class Validate {
 
         if (!firstFailedEl) { return true; }
 
-        const aidKeyHelper = new AidKeyHelper(aidKeyBitmap);
+        const aidKeyHelper = new AidKeyHelper(form,aidKeyBitmap);
 
         // Missing Alt, Ctrl keyboard modifiers ???
         const bypass = aidKeyHelper.isAttention(AidKeyHelper.keyToMapIndex(aidKey));
