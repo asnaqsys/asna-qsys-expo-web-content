@@ -42,7 +42,7 @@ const KEY_NOT_VALID_MSG = {
 };
 
 class Kbd {
-    processKeyDown(event, aidKeyBitmap) {
+    processKeyDown(form, event, aidKeyBitmap) {
         const keyDetail = Kbd.parseKey(event);
 
         if (!keyDetail.keyCode) {
@@ -53,7 +53,7 @@ class Kbd {
             return { ignore: true, removeVolatileMsgs: true };
         }
 
-        return this.processKeyDetail(keyDetail, aidKeyBitmap);
+        return this.processKeyDetail(form, keyDetail, aidKeyBitmap);
     }
 
     convertKeyNameToKeyDetail(candidateKeyName) {
@@ -88,8 +88,8 @@ class Kbd {
         return { keyCode: keyCode, shiftKey: shiftKey };
     }
 
-    processKeyDetail(keyDetail, aidKeyBitmap) {
-        const aidKeyHelper = new AidKeyHelper(aidKeyBitmap);
+    processKeyDetail(form, keyDetail, aidKeyBitmap) {
+        const aidKeyHelper = new AidKeyHelper(form, aidKeyBitmap);
 
         if ((Kbd.isFKey(keyDetail) || keyDetail.keyCode === KEY_CODE_ENTER || keyDetail.keyCode === KEY_CODE_PAGE_UP || keyDetail.keyCode === KEY_CODE_PAGE_DOWN) && !keyDetail.altKey && !keyDetail.ctrlKey) {
             switch (keyDetail.keyCode) {
@@ -115,6 +115,16 @@ class Kbd {
                     let functionNumber = Kbd.keyCodeToMapIndex(keyDetail);
                     let keyName = `F${functionNumber}`;
                     if (aidKeyHelper.isEnabled(functionNumber - 1)) {
+                        if (aidKeyHelper.isAlternateHelpKey(functionNumber - 1)) {
+                            keyName = 'Help';
+                        }
+                        else if (aidKeyHelper.isAlternatePgUpKey(functionNumber - 1)) {
+                            return Kbd.processRollKey('PgUp', keyDetail.target);
+                        }
+                        else if (aidKeyHelper.isAlternatePgDnKey(functionNumber - 1)) {
+                            return Kbd.processRollKey('PgDn', keyDetail.target);
+                        }
+
                         const sflFoldDropAction = FoldDrop.processCadidateKey(keyName, keyDetail.target);
                         if (sflFoldDropAction) {
                             return sflFoldDropAction;
@@ -357,9 +367,18 @@ const AID_KEY_MAP_CODE = {
     Function: 'F'
 };
 
+const HIDDEN_FIELD_NAME = {
+    ALT_KEY_CONFIG : '__AlternateKeyConfiguration__'
+};
+
 class AidKeyHelper {
-    constructor(map) {
+    constructor(form, map) {
         this.map = map;
+        this.alternateKeys = {};
+
+        if (form && form[HIDDEN_FIELD_NAME.ALT_KEY_CONFIG]) {
+            this.alternateKeys = JsonAttr.tryParse(form[HIDDEN_FIELD_NAME.ALT_KEY_CONFIG].value) || {};
+        }
     }
 
     decode(mapIndex) {
@@ -373,7 +392,41 @@ class AidKeyHelper {
     isEnabled(mapIndex) {
         if (mapIndex < 0) { return false; }
         if (mapIndex === AidKeyMapIndex.Enter) { return true; } // Always enabled.
-        return this.isAttention(mapIndex) || this.isFunction(mapIndex);
+        let normalEnabledResult = this.isAttention(mapIndex) || this.isFunction(mapIndex);
+        if (normalEnabledResult == false && ( 
+              this.isAlternateHelpKey(mapIndex) || 
+              this.isAlternatePgUpKey(mapIndex) || 
+              this.isAlternatePgDnKey(mapIndex) )) {
+            return true;
+        }
+        return normalEnabledResult;
+    }
+
+    isAlternateHelpKey(mapIndex) {
+       if ( this.alternateKeys && 
+            this.alternateKeys.help === (mapIndex + 1) ) {
+            return true;
+       }
+
+       return false;
+    }
+
+    isAlternatePgUpKey(mapIndex) {
+       if ( this.alternateKeys && 
+            this.alternateKeys.pgup === (mapIndex + 1) ) {
+            return true;
+       }
+
+       return false;
+    }
+
+    isAlternatePgDnKey(mapIndex) {
+       if ( this.alternateKeys && 
+            this.alternateKeys.pgdown === (mapIndex + 1) ) {
+            return true;
+       }
+
+       return false;
     }
 
     isAttention(mapIndex) {

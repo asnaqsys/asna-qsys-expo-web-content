@@ -563,7 +563,7 @@ class CalendarUI {
     }
 
     handleDocumentKeyDownEvent(event) {
-        let action = Kbd.processKeyDown(event, this.aidKeyBitmap);
+        let action = Kbd.processKeyDown(this.form, event, this.aidKeyBitmap);
 
         if (action.aidKeyToPush === 'ESC' || action.aidKeyToPush === 'TAB') {
             this.hide();
@@ -574,7 +574,7 @@ class CalendarUI {
         }
 
         if (action.returnBooleanValue) {
-            return action.ReturnBooleanValue;
+            return action.returnBooleanValue;
         }
     }
 
