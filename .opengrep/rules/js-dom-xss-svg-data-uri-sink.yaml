@@ -1,0 +1,17 @@
+rules:
+  - id: js-dom-xss-svg-data-uri-sink
+    message: A sensitive sink function was discovered. It causes a High severity DOM Based Cross-Site Scripting vulnerability. Code could be abused to perform a Cross Site Scripting attack.
+    severity: HIGH
+    languages:
+      - javascript
+      - typescript
+    # Match setting image src to a data:image/svg+xml;base64 payload (template literals or string literals)
+    pattern-regex: '(?s)\.src\s*=\s*(?:`data:image/svg\+xml;base64,|\s*["'']data:image/svg\+xml;base64,)'
+    paths:
+      include:
+        - "**/js/**/*.js"
+        - "**/js/**/*.ts"
+    metadata:
+      cwe: CWE-79
+      category: security
+      technology: browser
