@@ -1,5 +1,5 @@
 rules:
-  - id: js-dom-xss-svg-data-uri-sink
+  - id: dom-xss-svg-data-uri-sink
     message: A sensitive sink was found. DOM-derived data flows into an SVG data URI assigned to an image src, causing DOM XSS (CWE-79).
     severity: ERROR
     languages:
