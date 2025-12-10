@@ -9,7 +9,7 @@ export { theAlert as PageAlert};
 
 import { AsnaDataAttrName } from '../js/asna-data-attr.js';
 import { DomEvents } from '../js/dom-events.js';
-import { DialogPolyfill } from '../js/bterm/terminal-dialog-polyfill.js';
+import { DialogPolyfill } from '../js/dialog-polyfill.js';
 
 class EnhancedAlert {
     constructor() {
