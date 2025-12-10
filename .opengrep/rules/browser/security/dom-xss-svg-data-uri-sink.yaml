@@ -1,0 +1,56 @@
+rules:
+  - id: dom-xss-svg-data-uri-sink
+    message: A sensitive sink was found. DOM-derived data flows into an SVG data URI assigned to an image src, causing DOM XSS (CWE-79).
+    severity: ERROR
+    languages:
+      - javascript
+      - typescript
+
+    pattern-either:
+      # Branch 1: $DATA comes from getAttribute("value")
+      - patterns:
+          - pattern-either:
+              - pattern: $IMG.src = `data:image/svg+xml;base64,${$DATA}`
+              - pattern: $IMG.src = "data:image/svg+xml;base64," + $DATA
+              - pattern: $IMG.src = 'data:image/svg+xml;base64,' + $DATA
+          - pattern-inside: |
+              function $F(...){
+                ...
+                $DATA = $EL.getAttribute("value");
+                ...
+              }
+          - pattern-not-inside: |
+              function $F(...){
+                ...
+                $DATA = window.btoa($X);
+                ...
+              }
+
+      # Branch 2: $DATA2 comes from $EL.value
+      - patterns:
+          - pattern-either:
+              - pattern: $IMG.src = `data:image/svg+xml;base64,${$DATA2}`
+              - pattern: $IMG.src = "data:image/svg+xml;base64," + $DATA2
+              - pattern: $IMG.src = 'data:image/svg+xml;base64,' + $DATA2
+          - pattern-inside: |
+              function $F(...){
+                ...
+                $DATA2 = $EL.value;
+                ...
+              }
+          - pattern-not-inside: |
+              function $F(...){
+                ...
+                $DATA2 = window.btoa($X2);
+                ...
+              }
+
+    paths:
+      include:
+        - "**/js/**/*.js"
+        - "**/js/**/*.ts"
+
+    metadata:
+      cwe: CWE-79
+      category: security
+      technology: browser

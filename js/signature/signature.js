@@ -112,7 +112,11 @@ class Signature {
         // $TODO- Window and 'orientationchange' and 'resize' handlers
 
         if (base64EncodedXmlSvg) {
-            signImage.src = `data:image/svg+xml;base64,${base64EncodedXmlSvg}`;
+            // Sanitize incoming SVG before using it as a data URI to avoid DOM XSS
+            const decodedSvg = Base64.decode(base64EncodedXmlSvg);
+            const safeSvg = Signature.sanitizeSvg(decodedSvg);
+            const safeBase64 = window.btoa(safeSvg);
+            signImage.src = `data:image/svg+xml;base64,${safeBase64}`;
             signImage.style.display = 'block';
         }
     }
@@ -160,9 +164,74 @@ class Signature {
     static encodeSvgMarkup(svgMarkup) {
         if (!svgMarkup) { return ''; }
 
-        return window.btoa(svgMarkup); // Note: we don't add the XML svg file header (reduce response)
+        // Ensure we encode only sanitized markup
+        const safeSvg = Signature.sanitizeSvg(svgMarkup);
+        return window.btoa(safeSvg); // Note: we don't add the XML svg file header (reduce response)
     }
 }
+
+// Basic SVG sanitizer: removes scripts, foreignObject, and dangerous attributes/links.
+// This is a minimal, dependency-free approach suitable for signature paths.
+Signature.sanitizeSvg = function (svgText) {
+    if (!svgText || typeof svgText !== 'string') { return ''; }
+    let doc;
+    try {
+        const parser = new DOMParser();
+        doc = parser.parseFromString(svgText, 'image/svg+xml');
+    } catch (_) {
+        return '';
+    }
+    if (!doc || doc.getElementsByTagName('parsererror').length) { return ''; }
+
+    const dangerousTags = new Set(['script', 'foreignObject']);
+    const walk = (node) => {
+        if (node.nodeType !== 1) { // ELEMENT_NODE
+            return;
+        }
+        const tagName = node.tagName ? node.tagName.toLowerCase() : '';
+        if (dangerousTags.has(tagName)) {
+            node.parentNode && node.parentNode.removeChild(node);
+            return; // removed
+        }
+        // Remove event handler attributes and risky links/styles
+        const attrs = Array.from(node.attributes || []);
+        for (const attr of attrs) {
+            const name = attr.name.toLowerCase();
+            const value = (attr.value || '').trim().toLowerCase();
+            // Remove any on* handlers
+            if (name.startsWith('on')) {
+                node.removeAttribute(attr.name);
+                continue;
+            }
+            // Remove links that can execute scripts
+            if (name === 'href' || name === 'xlink:href') {
+                if (value.startsWith('javascript:') || value.startsWith('data:text/html')) {
+                    node.removeAttribute(attr.name);
+                    continue;
+                }
+            }
+            // Remove styles with url(javascript:...)
+            if (name === 'style' && value.includes('url(') && value.includes('javascript:')) {
+                node.removeAttribute(attr.name);
+                continue;
+            }
+        }
+        // Recurse children
+        const children = Array.from(node.childNodes || []);
+        for (const child of children) {
+            walk(child);
+        }
+    };
+
+    walk(doc.documentElement);
+
+    const serializer = new XMLSerializer();
+    try {
+        return serializer.serializeToString(doc);
+    } catch (_) {
+        return '';
+    }
+};
 
 class SignatureCollection {
     constructor() {
