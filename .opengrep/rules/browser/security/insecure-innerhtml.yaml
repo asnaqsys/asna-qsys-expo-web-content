@@ -23,7 +23,7 @@ rules:
   languages:
   - javascript
   - typescript
-  severity: ERROR
+  severity: WARNING
   patterns:
   - pattern: |
       $EL.innerHTML = $HTML;
