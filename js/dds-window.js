@@ -123,7 +123,20 @@ class DdsWindow {
         return el.value.toLowerCase() === 'true';
     }
 
-    restoreWindowPrevPage() {
+    getRestorableDisplayFileVersion(form) {
+        let version = 0;
+        let hiddenElement = form['__restorableDisplayFileVersion__'];
+        if (hiddenElement && hiddenElement.value) {
+            version = parseInt(hiddenElement.value, 10);
+        }
+        return version;
+    }
+
+    forgetLastRestoreDisplay() {
+        sessionStorage.setItem(STORAGE_NS.RESTOREDISPLAY_LAST, '*NONE');
+    }
+
+    restoreWindowPrevPage(form) {
         let imgData = '';
 
         if (!this.activeWindowRecord) {
@@ -163,6 +176,25 @@ class DdsWindow {
 
         if (winStackDirty) {
             this.serializeWinRestoreStack();
+        }
+
+        // if we have a restoredisplay image, then use it instead of the popup background
+        let restorableDisplayFileVersion = this.getRestorableDisplayFileVersion(form);
+
+        if (restorableDisplayFileVersion > 0) {
+            // We are processing a restorable display file
+            let lastRstDspUrl = sessionStorage.getItem(STORAGE_NS.RESTOREDISPLAY_LAST);
+            // if the restorable display file was not processed on the previous I/O cycle, then it became inactive
+            let fileWasMadeInactive = lastRstDspUrl && lastRstDspUrl !== url;
+            if (fileWasMadeInactive) {
+                const rstDspKey = `${STORAGE_NS.RESTOREDISPLAY}${url} | ${restorableDisplayFileVersion}`;
+                const rstDspImage = sessionStorage.getItem(rstDspKey);
+                // Restore the display file image (unless the file had been closed and reopened again)
+                if (rstDspImage) {
+                    DdsWindow.log(`restoreWindowPrevPage - Using restoredisplay image for DisplayFileVersion:${restorableDisplayFileVersion}`);
+                    imgData = rstDspImage;
+                }
+            }
         }
 
         if (imgData && imgData.length>0) {
@@ -280,8 +312,14 @@ class DdsWindow {
         return false;
     }
 
-    completePrepareSubmit(mostRecentBackgroundImageData) {
+    completePrepareSubmit(form, mostRecentBackgroundImageData) {
         DdsWindow.log(`completePrepareSubmit - Got a new Image!`);
+
+        let restorableDisplayFileVersion = this.getRestorableDisplayFileVersion(form);
+
+        if (restorableDisplayFileVersion > 0) {
+            ClientStorage.saveRstDspBackground(window.location.pathname, restorableDisplayFileVersion, mostRecentBackgroundImageData);
+        }
 
         if (this.activeWindowRecord) {
             ClientStorage.savePageBackground(window.location.pathname, NEXT_BACKGROUND_IMAGE_NAME, mostRecentBackgroundImageData);
@@ -373,7 +411,9 @@ class DdsWindow {
 
 const STORAGE_NS = {
     DISPLAYFILE: 'ASNA.DisplayFile',
-    BACKGROUND: 'ASNA.PrevPage.Background'
+    BACKGROUND: 'ASNA.PrevPage.Background',
+    RESTOREDISPLAY: 'ASNA.RSTDSP',
+    RESTOREDISPLAY_LAST: 'ASNA.RSTDSP.Last'
 };
 
 class RestoreStack {
@@ -518,6 +558,25 @@ class ClientStorage {
         sessionStorage.removeItem(sourcekey);
         return sourceImage;
     }
+
+
+    static saveRstDspBackground(url, restorableDisplayFileVersion, imageData) {
+        const fileKey = `${STORAGE_NS.RESTOREDISPLAY}${url} |`;
+        const itemKey = `${fileKey} ${restorableDisplayFileVersion}`;
+        if (restorableDisplayFileVersion > 1) {
+            for (let i = 0, l = sessionStorage.length; i < l; i++) {
+                const key = sessionStorage.key(i);
+                if (key.startsWith(fileKey) && key !== itemKey) {
+                    sessionStorage.removeItem(key);
+                    break;
+                }
+            }
+        }
+        sessionStorage.setItem(itemKey, imageData);
+        sessionStorage.setItem(STORAGE_NS.RESTOREDISPLAY_LAST, url);
+        ClientStorage.log(`saveRstDspBackground key:${itemKey} Url:${url} DisplayFileVersion:${restorableDisplayFileVersion}.`);
+    }
+
 
     static savePageBackground(url, winName, imageData) {
         const key = ClientStorage.makeDisplayfileKey(url, winName);

@@ -118,7 +118,7 @@ class Page {
 
         this.winPopup = null;
         if (DdsWindow.activeWindowRecord !== null) {
-            const imgData = DdsWindow.restoreWindowPrevPage();
+            const imgData = DdsWindow.restoreWindowPrevPage(thisForm);
             this.winPopup = DdsWindow.initPopup(thisForm);
             if (imgData && main) {
                 const rect = Page.restoreLastMainHeight('/');
@@ -126,6 +126,8 @@ class Page {
             }
         }
         this.setAsInitialized(main, this.winPopup!== null);
+
+        DdsWindow.forgetLastRestoreDisplay();
 
         if (this.winPopup) {
             DdsGrid.moveRecordsToPopup(thisForm, this.winPopup);
@@ -566,11 +568,11 @@ class Page {
     }
 
     handleHtmlToImageCompleteEvent(winBackgroundImageData,error) {
+        const form = this.getForm();
         if (winBackgroundImageData) {
-            DdsWindow.completePrepareSubmit(winBackgroundImageData);
+            DdsWindow.completePrepareSubmit(form, winBackgroundImageData);
         }
 
-        const form = this.getForm();
         form.submit();
     }
 
