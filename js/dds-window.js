@@ -123,10 +123,18 @@ class DdsWindow {
         return el.value.toLowerCase() === 'true';
     }
 
+    getRestorableDisplayFileVersion(form) {
+        let version = 0;
+        let hiddenElement = form['__restorableDisplayFileVersion__'];
+        if (hiddenElement && hiddenElement.value) {
+            version = parseInt(hiddenElement.value, 10);
+        }
+        return version;
+    }
+
     forgetLastRestoreDisplay() {
         sessionStorage.setItem(STORAGE_NS.RESTOREDISPLAY_LAST, '*NONE');
     }
-
 
     restoreWindowPrevPage(form) {
         let imgData = '';
@@ -171,10 +179,8 @@ class DdsWindow {
         }
 
         // if we have a restoredisplay image, then use it instead of the popup background
-        let restorableDisplayFileVersion = 0;
-        if (form["__restorableDisplayFileVersion__"] && form["__restorableDisplayFileVersion__"].value) {
-            restorableDisplayFileVersion = parseInt(form["__restorableDisplayFileVersion__"].value, 10);
-        }
+        let restorableDisplayFileVersion = this.getRestorableDisplayFileVersion(form);
+
         if (restorableDisplayFileVersion > 0) {
             // We are processing a restorable display file
             let lastRstDspUrl = sessionStorage.getItem(STORAGE_NS.RESTOREDISPLAY_LAST);
@@ -309,10 +315,7 @@ class DdsWindow {
     completePrepareSubmit(form, mostRecentBackgroundImageData) {
         DdsWindow.log(`completePrepareSubmit - Got a new Image!`);
 
-        let restorableDisplayFileVersion = 0;
-        if (form["__restorableDisplayFileVersion__"] && form["__restorableDisplayFileVersion__"].value) {
-            restorableDisplayFileVersion = parseInt(form["__restorableDisplayFileVersion__"].value, 10);
-        }
+        let restorableDisplayFileVersion = this.getRestorableDisplayFileVersion(form);
 
         if (restorableDisplayFileVersion > 0) {
             ClientStorage.saveRstDspBackground(window.location.pathname, restorableDisplayFileVersion, mostRecentBackgroundImageData);
