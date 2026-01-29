@@ -340,7 +340,7 @@ class DdsGrid {
 
         for (let i = 0; i < count; i++) {
             const row = i + offset;
-            if ( ! excludeRowList || !excludeRowList.includes(row) ) {
+            if (!Array.isArray(excludeRowList) || !excludeRowList.includes(row)) {
                 parent.insertBefore(this.createEmptyDivGridRowStyle(row), beforeEl);
             }
         }
