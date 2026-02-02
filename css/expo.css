@@ -202,6 +202,10 @@ body {
     width: min-content;
 }
 
+.dds-subfile-columns { /* When subfile renders on multiple columns, each column positioned as children of a flex container. */
+    display: flex
+}
+
 /*-------------------------------------------*\
     DDS field related styles.
 
