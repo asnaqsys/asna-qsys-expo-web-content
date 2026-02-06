@@ -17,24 +17,26 @@ const AJAX_RESPONSE_TIMEOUT = 3 * 60 * 1000; // 3 minutes
 
 class SubfilePaging {
     static requestPage(aidKey, store, ajaxRespEventHandler, ajaxErrorEventHandler) {
+        const subfilePageSize = store.sflRecords.pageSize;
         let reqFrom = store.current.topRrn;
         let wantDropped = !store.fldDrop.isFolded;
-        let wantPageSize = store.sflRecords.pageSize;
+        let wantPageSize = subfilePageSize;
+        let currentPageSize = SubfilePaging.calcPageSizeIfDropped(store, subfilePageSize);
 
         switch (aidKey) {
             case 'PgDn':
-                reqFrom += store.sflRecords.pageSize;
-                wantPageSize = SubfilePaging.calcPageSizeIfDropped(store, wantPageSize);
+                wantPageSize = currentPageSize;
+                reqFrom += currentPageSize;
                 break;
 
             case 'PgUp':
-                reqFrom = Math.max(store.current.topRrn - store.sflRecords.pageSize, 0);
+                reqFrom = Math.max(store.current.topRrn - currentPageSize, 0);
 
                 if (reqFrom == 0 && store.current.topRrn == 0) {
                     Kbd.showInvalidRollAlert();
                     return false;
                 }
-                wantPageSize = SubfilePaging.calcPageSizeIfDropped(store, wantPageSize);
+                wantPageSize = currentPageSize;
                 break;
 
             default:
@@ -44,7 +46,7 @@ class SubfilePaging {
                     if (foldRowsPerRecord === NaN || foldRowsPerRecord <= 0) { return false; }
                     wantDropped = store.fldDrop.isFolded ? true : false; // Request opposite
                     if (wantDropped)
-                        wantPageSize = store.sflRecords.pageSize * foldRowsPerRecord;
+                        wantPageSize = subfilePageSize * foldRowsPerRecord;
                 }
                 break;
         }
