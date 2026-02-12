@@ -415,7 +415,49 @@ class Page {
             }
         }
 
+        let multiColumn = recordsContainer.querySelectorAll('.dds-subfile-columns');
+        let multiColumnCount = 1;
+
+        if (multiColumn && multiColumn.length > 0) {
+            const firstMultiColumn = multiColumn[0];
+            multiColumnCount = firstMultiColumn.querySelectorAll(':scope > .dds-subfile-record').length;
+        }
+
         recordsContainer.innerHTML = res.html;
+
+        if (multiColumn && multiColumn.length > 0 && multiColumnCount > 1) {
+            // If the subfile is multi-column, the AJAX response provides a flat list of records.
+            // This block restructures the flat list back into the required multi-column format.
+            // It iterates through the new records, wraps them in 'span.dds-subfile-record' elements,
+            // and groups them into 'div.dds-subfile-columns' containers, preserving the original layout.
+            const newRecords = Array.from(recordsContainer.children);
+            recordsContainer.innerHTML = ''; // Clear the container to rebuild it
+
+            for (let i = 0; i < newRecords.length; i += multiColumnCount) {
+                const colWrapper = document.createElement('div');
+                colWrapper.className = 'dds-subfile-columns';
+
+                for (let j = 0; j < multiColumnCount; j++) {
+                    const recordIndex = i + j;
+                    if (recordIndex < newRecords.length) {
+                        const recordSpan = document.createElement('span');
+                        recordSpan.className = 'dds-subfile-record';
+                        recordSpan.innerHTML = newRecords[recordIndex].innerHTML;
+                        colWrapper.appendChild(recordSpan);
+                    }
+                }
+                recordsContainer.appendChild(colWrapper);
+            }
+
+            // After restructuring the multi-column layout, we need to re-apply the tabIndex for input-capable elements to ensure proper keyboard navigation.
+            let tabIndex = 1;
+            const inputCapableElements = recordsContainer.querySelectorAll('input, button, select, textarea');
+            inputCapableElements.forEach(el => {
+                if (el.type !== 'hidden') {
+                    el.tabIndex = tabIndex++;
+                }
+            });
+        }
 
         // Re-apply style changes marked by 'data-asna-xxx' attributes
         if (!tBody) {
