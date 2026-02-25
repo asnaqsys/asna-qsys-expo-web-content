@@ -321,12 +321,10 @@ class DdsWindow {
             ClientStorage.saveRstDspBackground(window.location.pathname, restorableDisplayFileVersion, mostRecentBackgroundImageData);
         }
 
-        if (this.activeWindowRecord) {
+        if (this.activeWindowRecord)
             ClientStorage.savePageBackground(window.location.pathname, NEXT_BACKGROUND_IMAGE_NAME, mostRecentBackgroundImageData);
-        }
-        else {
-            ClientStorage.savePrevPageBackground(mostRecentBackgroundImageData);
-        }
+
+        ClientStorage.savePrevPageBackground(mostRecentBackgroundImageData);
 
         if (typeof MonarchPageForPopupSaved === 'function') { // Notify user-code
             MonarchPageForPopupSaved();
