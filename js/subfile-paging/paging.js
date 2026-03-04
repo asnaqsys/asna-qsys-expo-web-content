@@ -45,8 +45,12 @@ class SubfilePaging {
                     const foldRowsPerRecord = parseInt(store.fldDrop.foldLinesPerRecord, 10);
                     if (foldRowsPerRecord === NaN || foldRowsPerRecord <= 0) { return false; }
                     wantDropped = store.fldDrop.isFolded ? true : false; // Request opposite
-                    if (wantDropped)
+                    if (wantDropped) {
                         wantPageSize = subfilePageSize * foldRowsPerRecord;
+                    }
+                    else { // Transition from dropped to folded.
+                        store.sflRecords.allowsAjax = true; // Folded response will have less records, allow Page Up/Down requests again.
+                    }
                 }
                 break;
         }
