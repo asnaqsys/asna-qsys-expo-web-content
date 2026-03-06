@@ -91,7 +91,7 @@ class Page {
 
         DdsWindow.init(thisForm);
         const main = thisForm.querySelector(MAIN_SELECTOR);
-        const sflEndIcons = SubfileController.init(main, this.handlePushKeyOnClickEvent);
+        const sflEndIcons = SubfileController.init(thisForm, main, this.handlePushKeyOnClickEvent);
         DdsGrid.completeGridRows(thisForm, DdsWindow.activeWindowRecord);
         if (sflEndIcons && sflEndIcons.length) {
             SubfileController.moveEmptyRowsBeforeSflEndRow(thisForm);
@@ -390,7 +390,8 @@ class Page {
         sflCtrlStore.current.topRrn = res.request.from;
 
         if (res.request.requestorAidKey === sflCtrlStore.fldDrop.aidKey) {
-            sflCtrlStore.fldDrop.isFolded = ! res.request.wantDropped; 
+            sflCtrlStore.fldDrop.isFolded = !res.request.wantDropped; 
+            FeedbackArea.updateSubfileMode(form, sflCtrlStore.fldDrop.isFolded ? '0' : '1');
         }
 
         let currentPageState = SubfileState.rememberPageState(recordsContainer);

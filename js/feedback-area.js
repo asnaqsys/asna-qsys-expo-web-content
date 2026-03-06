@@ -14,6 +14,7 @@ const FEEDBACK_HIDDEN_FIELD_NAME = {
     pushedKey: '__PushedKey__',
     atCursorLocation: '__atCursorLocation__',
     atRowCol: '__atRowCol__',
+    sflMode: '__SflMode__',
 
     // Subfile
     atSflCursorRrn: '__atSflRRN__',
@@ -149,6 +150,10 @@ class FeedbackArea {
                 }
             }
         }
+    }
+
+    updateSubfileMode(form, mode) {
+        FeedbackArea.setHiddenFieldValue(form, FEEDBACK_HIDDEN_FIELD_NAME.sflMode, mode);
     }
 
     getHiddenInputRowRecNumber(row) {
