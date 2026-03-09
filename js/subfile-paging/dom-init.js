@@ -45,7 +45,7 @@ let debug = false;
 
 class SubfileController {
 
-    static init(mainDiv, sflEndClickAsPushKeyHandling) {
+    static init(form, mainDiv, sflEndClickAsPushKeyHandling) {
         let sflIcons = [];
         if (mainDiv) {
             const elements = mainDiv.querySelectorAll(`div[${AsnaDataAttrName.SFLC}]`);
@@ -80,6 +80,7 @@ class SubfileController {
                                 SubfileController.addMouseCueEvents(recordsContainer, initData.inputBehaviour);
                                 SubfileController.removeRowGap(recordsContainer);
                                 sflCtrlStore.fldDrop.foldLinesPerRecord = SubfileController.querySubfileFoldLinesPerRecord(recordsContainer);
+                                FeedbackArea.updateSubfileMode(form, sflCtrlStore.fldDrop.isFolded ? '0' : '1');
 
                                 if (sflCtrlStore.sflEnd.showSubfileEnd) {
                                     // According to IBM here https://www.ibm.com/docs/en/i/7.5?topic=80-sflend-subfile-end-keyword-display-files
