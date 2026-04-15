@@ -853,6 +853,23 @@ div:has(> input#rendering-fake-data-close:checked) {
     display: none;
 }
 
+.cursor-marker {
+    position: fixed; /* Stays in place even on scroll */
+    top: 0;
+    left: 0;
+    width: clamp(0.6rem, 0.75rem, 1rem);
+    height: clamp(0.6rem, 0.75rem, 1rem);
+    background-color: rgba(0, 255, 0, 0.8); /* 80% opacity bright green */
+    box-shadow: 0 0 6px rgba(0, 255, 0, 0.9); /* Glow effect */
+    border: 1px solid #00cc00;
+    border-radius: 50%; /* Circular dot */
+    pointer-events: none; /* So it doesn't block clicks */
+    transform: translate(-50%, -50%); /* Center the dot on the coordinates */
+    z-index: 9999; /* Above everything */
+    opacity: 0; /* Start invisible; will be shown when clicked */
+    transition: opacity 0.2s ease; /* Optional subtle fade */
+}
+
 /*-------------------------------------------*\
     Synon Escape
 
