@@ -611,6 +611,14 @@ class Page {
             return;
         }
 
+        const main = form.querySelector(MAIN_SELECTOR);
+        if (main) {
+            const cursorMarker = main.querySelector('div.cursor-marker');
+            if (cursorMarker && cursorMarker.dataset.clicked) {
+                FeedbackArea.overrideRowColFeedback(form, main, cursorMarker, DdsGrid.calcRowHeight(main))
+            }
+        }
+
         const delaySubmit = DdsWindow.prepareForSubmit(form, this.handleHtmlToImageCompleteEvent, this.handleHtmlToImageFilterEvent );
 
         WaitForResponseAnimation.prepareWaitAnimation(true);
