@@ -38,6 +38,28 @@ class FeedbackArea {
         }
     }
 
+    overrideRowColFeedback(form, main, cursorMarker, gridRowHeight) {
+        if (form && main && cursorMarker) {
+            const input = form[FEEDBACK_HIDDEN_FIELD_NAME.atRowCol];
+            if (input && 'value' in input) {
+                const mainRect = main.getBoundingClientRect();
+                const gridColWidth = getComputedStyle(document.documentElement).getPropertyValue('--dds-grid-col-width');
+
+                // Get marker position relative to viewport
+                const markerRect = cursorMarker.getBoundingClientRect();
+                // Calculate marker center position relative to main element
+                const markerCenterX = (markerRect.left + markerRect.width / 2) - mainRect.left;
+                const markerCenterY = (markerRect.top + markerRect.height / 2) - mainRect.top;
+
+                let col = Math.floor(markerCenterX / parseInt(gridColWidth)) + 1; // +1 because columns are 1-based
+                let row = Math.floor(markerCenterY / parseInt(gridRowHeight)) + 1; // +1 because rows are 1-based (assuming square cells)
+
+                // alert(`atRowCol: ${row},${col}`);
+                FeedbackArea.setHiddenFieldValue(form, FEEDBACK_HIDDEN_FIELD_NAME.atRowCol, `${row},${col}`);
+            }
+        }
+    }
+
     updateElementFeedback(form, el, activeWinSpecs, sflCursorRrn) {
         if (form) { // Clear the last value ...
             FeedbackArea.setHiddenFieldValue(form, FEEDBACK_HIDDEN_FIELD_NAME.atCursorLocation, '');

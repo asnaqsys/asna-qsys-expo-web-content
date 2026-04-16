@@ -180,7 +180,7 @@ class Kbd {
             if (firstSflCtrlName) {
                 const firstCtrlStore = SubfilePagingStore.getSflCtlStore(firstSflCtrlName);
                 if (firstCtrlStore) {
-                    action = Kbd.handleRoll(aidKey, sflCtrlStore);
+                    action = Kbd.handleRoll(aidKey, firstCtrlStore);
                 }
             }
 

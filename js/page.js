@@ -167,6 +167,33 @@ class Page {
         this.resetLastClickOnFocus = true;
 
         DynamicList.init(thisForm);
+
+        const cursorMarker = main.querySelector('div.cursor-marker');
+        if (cursorMarker) {
+            main.addEventListener('click', (event) => {
+                if (event.ctrlKey) { // Only when Ctrl key is pressed
+                    event.preventDefault();
+
+                    const x = event.clientX;
+                    const y = event.clientY;
+
+                    // Update position (using transform for better performance)
+                    cursorMarker.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+
+                    // Make it briefly visible/pulse if hidden by default
+                    cursorMarker.style.opacity = '1';
+                    setTimeout(() => {
+                        cursorMarker.style.opacity = '0.6';
+                    }, 300);
+
+                    // Mark with data attribute
+                    cursorMarker.dataset.clicked = 'true';
+                } else { // Clear marker when Ctrl is not pressed
+                    cursorMarker.style.opacity = '0';
+                    delete cursorMarker.dataset.clicked;
+                }
+            });
+        }
     }
 
     static setupAutoPostback(form, aidKeyBitmap) {
@@ -582,6 +609,14 @@ class Page {
         if (!Validate.reportFormValidity(form)) {
             this.suspendAsyncPost = false;
             return;
+        }
+
+        const main = form.querySelector(MAIN_SELECTOR);
+        if (main) {
+            const cursorMarker = main.querySelector('div.cursor-marker');
+            if (cursorMarker && cursorMarker.dataset.clicked) {
+                FeedbackArea.overrideRowColFeedback(form, main, cursorMarker, DdsGrid.calcRowHeight(main))
+            }
         }
 
         const delaySubmit = DdsWindow.prepareForSubmit(form, this.handleHtmlToImageCompleteEvent, this.handleHtmlToImageFilterEvent );
