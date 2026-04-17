@@ -529,6 +529,11 @@ class Subfile {
         if (typeof inputEl.type !== 'undefined' && inputEl.type === 'checkbox') {
             state = new InputState(true, null, inputEl.checked);
         }
+        else if (inputEl.tagName === 'SELECT') {
+            const selectedOption = inputEl.options[inputEl.selectedIndex];
+            const value = selectedOption ? selectedOption.value : '';
+            state = new InputState(false, value);
+        }
         else if (typeof (inputEl.value) !== 'undefined') {
             state = new InputState(false, inputEl.value);
         }
@@ -557,7 +562,7 @@ class Subfile {
 
     static findFieldInDOM(recordsContainer, fieldname) {
         const fieldnameEscaped = Subfile.escapeName(fieldname);
-        const input = recordsContainer.querySelector(`input[name="${fieldnameEscaped}"]`);
+        const input = recordsContainer.querySelector(`input[name="${fieldnameEscaped}"], select[name="${fieldnameEscaped}"], textarea[name="${fieldnameEscaped}"]`);
         return input;
     }
 

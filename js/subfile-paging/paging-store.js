@@ -11,6 +11,7 @@ import { Subfile } from './dom-init.js';
 
 const CLASS_GRID_ROW = 'dds-grid-row';
 const CLASS_GRID_EMPTY_ROW = 'dds-grid-empty-row';
+const ATTR_SFL_END_ADDED_ROW = 'data-asna-sfl-added-row';
 
 class SubfilePagingStore {
     constructor() {
@@ -86,7 +87,7 @@ class SubfileState {
     static getPageInputStateChanges(initialPageState, currentPageState) {
         let result = [];
 
-        if (initialPageState.length !== currentPageState.length) { return result;  }
+        if (initialPageState.length !== currentPageState.length) { return result; }
 
         // Note: row hiddenState is not compared.
         for (let row = 0, l = initialPageState.length; row < l; row++) {
@@ -96,7 +97,7 @@ class SubfileState {
             for (let key in initialRowState.state) {
                 SubfileState.getInputStateChange(rowChanges, key, initialRowState.state, currentRowState.state);
             }
-            if (Object.keys(rowChanges).length>0) {
+            if (Object.keys(rowChanges).length > 0) {
                 result.push({ hiddenState: initialRowState.hiddenState, state: rowChanges });
             }
         }
@@ -106,41 +107,82 @@ class SubfileState {
 
     static mergeInputState(sflEdits, newEdits) {
         let mergedEdits = [];
-        let usedKeys = [];
+        let usedHiddenKeys = {};
 
+        // First, copy all existing edits
         for (let i = 0, l = sflEdits.length; i < l; i++) {
             const currentRow = sflEdits[i];
-            const mergedRow = { hiddenState: currentRow.hiddenState, state: []};
+            const mergedRow = { hiddenState: currentRow.hiddenState, state: [] };
+
+            // Build a key from hiddenState to identify the row
+            const rowKey = SubfileState.getRowKey(currentRow.hiddenState);
+            usedHiddenKeys[rowKey] = i; // Track which rows we've seen
+
+            // Check if this row exists in newEdits (by matching hiddenState)
+            const matchingNewRow = SubfileState.findRowByHiddenState(newEdits, currentRow.hiddenState);
 
             for (let key in currentRow.state) {
-                if (newEdits[key] instanceof InputState) {
-                    SubfileState.getInputStateChange(mergedRow.state, key, currentRow.state, newEdits);
+                if (matchingNewRow && matchingNewRow.state[key] instanceof InputState) {
+                    // New edit for same field - use the newer value
+                    mergedRow.state[key] = matchingNewRow.state[key];
                 }
                 else {
+                    // Keep existing edit
                     mergedRow.state[key] = currentRow.state[key];
                 }
+            }
 
-                usedKeys[key] = true;
+            // Add any new fields from matchingNewRow that weren't in currentRow
+            if (matchingNewRow) {
+                for (let key in matchingNewRow.state) {
+                    if (!(key in mergedRow.state)) {
+                        mergedRow.state[key] = matchingNewRow.state[key];
+                    }
+                }
             }
 
             mergedEdits.push(mergedRow);
         }
 
+        // Add any completely new rows from newEdits that weren't in sflEdits
         for (let i = 0, l = newEdits.length; i < l; i++) {
             const newEditRow = newEdits[i];
-            for (let key in newEditRow.state) {
-                if (!usedKeys[key]) {
-                    mergedEdits.push(newEditRow);
-                }
+            const rowKey = SubfileState.getRowKey(newEditRow.hiddenState);
+
+            if (!(rowKey in usedHiddenKeys)) {
+                mergedEdits.push({ hiddenState: newEditRow.hiddenState, state: { ...newEditRow.state } });
             }
         }
 
         return mergedEdits;
     }
 
+    static getRowKey(hiddenState) {
+        // Create a unique key from the hiddenState to identify the row
+        let key = '';
+        for (let k in hiddenState) {
+            if (hiddenState[k] instanceof InputState) {
+                key += `${k}=${hiddenState[k].value};`;
+            }
+        }
+        return key;
+    }
+
+    static findRowByHiddenState(edits, targetHiddenState) {
+        const targetKey = SubfileState.getRowKey(targetHiddenState);
+        for (let i = 0, l = edits.length; i < l; i++) {
+            if (SubfileState.getRowKey(edits[i].hiddenState) === targetKey) {
+                return edits[i];
+            }
+        }
+        return null;
+    }
+
     static rememberPageState(recordsContainer) {
         if (!recordsContainer) { return []; }
-        const rows = recordsContainer.tagName === 'TBODY' ? recordsContainer.querySelectorAll('tr') : recordsContainer.querySelectorAll(`div[class~="${CLASS_GRID_ROW}"]`);
+        const rows = recordsContainer.tagName === 'TBODY'
+            ? recordsContainer.querySelectorAll('tr')
+            : recordsContainer.querySelectorAll(`div[class~="${CLASS_GRID_ROW}"]:not([${ATTR_SFL_END_ADDED_ROW}])`);
         if (rows.length === 0) { return []; }
 
         const sflState = [];
@@ -155,7 +197,7 @@ class SubfileState {
                 }
             }
 
-            const notHiddenInput = row.querySelectorAll('input:not([type="hidden"])');
+            const notHiddenInput = row.querySelectorAll('input:not([type="hidden"]), select, textarea'); // Note: select and textarea cannot be hidden, so no need to exclude hidden type for them.
 
             for (let j = 0, li = notHiddenInput.length; j < li; j++) {
                 Subfile.addInputState(rowState.state, notHiddenInput[j]);
