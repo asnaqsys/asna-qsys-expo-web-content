@@ -421,16 +421,13 @@ class Page {
             FeedbackArea.updateSubfileMode(form, sflCtrlStore.fldDrop.isFolded ? '0' : '1');
         }
 
-        let currentPageState = SubfileState.rememberPageState(recordsContainer);
+        let currentSnapshot = SubfileState.snapshotPage(recordsContainer);
+        let currentHidden = SubfileState.snapshotHiddenFields(recordsContainer);
 
-        // Before replacing Page, save edits by comparing initialState with state of subfile page about to be replaced.
-        let currentPageEdits = SubfileState.getPageInputStateChanges(sflCtrlStore.initialPageState, currentPageState);
-        if (!sflCtrlStore.sflEdits) { 
-            sflCtrlStore.sflEdits = currentPageEdits; // First paging transition
-        }
-        else {
-            sflCtrlStore.sflEdits = SubfileState.mergeInputState(sflCtrlStore.sflEdits, currentPageEdits);
-        }
+        // Save edits by diffing initial snapshot vs current
+        let pageChanges = SubfileState.getChanges(sflCtrlStore.initialSnapshot, currentSnapshot);
+        sflCtrlStore.sflEdits = SubfileState.mergeEdits(sflCtrlStore.sflEdits, pageChanges);
+        sflCtrlStore.sflHidden = SubfileState.mergeHiddenFields(sflCtrlStore.sflHidden, currentHidden, sflCtrlStore.sflEdits.keys());
 
         let cursorPosRrnOffset = -1;
         let lastSflFldWithCursorName = '';
@@ -507,8 +504,8 @@ class Page {
         RadioButtonGroup.init(form);
         this.addOnFocusEventListener();
 
-        // Now restore the edits if this page had been seen before
-        SubfileState.RestoreInputChanges(recordsContainer, sflCtrlStore.sflEdits);
+        SubfileState.restoreEdits(recordsContainer, sflCtrlStore.sflEdits);
+
         const withGridCol = SubfileController.selectAllWithGridColumns(recordsContainer);
         const sflColRange = SubfileController.calcSflMinMaxColRange(withGridCol);
 
@@ -536,7 +533,7 @@ class Page {
                 this.initIcons(sflEndIcons);
         }
 
-        sflCtrlStore.initialPageState = SubfileState.rememberPageState(recordsContainer); // Initial State of new page.
+        sflCtrlStore.initialSnapshot = SubfileState.snapshotPage(recordsContainer); // Initial state of new page
 
         const topRrn = sflCtrlStore.current.topRrn;
         if (needToRestoreCursor) {
