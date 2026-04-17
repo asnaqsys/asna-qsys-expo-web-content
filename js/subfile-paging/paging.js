@@ -8,7 +8,7 @@
 export { SubfilePaging };
 
 import { Fetch } from '../ajax/ajax-fetch.js';
-import { SubfilePagingStore } from '../subfile-paging/paging-store.js';
+import { SubfilePagingStore, SubfileState } from '../subfile-paging/paging-store.js';
 import { Subfile } from '../subfile-paging/dom-init.js';
 import { DdsGrid } from '../dds-grid.js';
 import { Kbd } from '../kbd.js';
@@ -96,21 +96,33 @@ class SubfilePaging {
 
     static createDOM_ElementsEdited(sflCtrlFormatName) {
         let sflCtrlStore = SubfilePagingStore.getSflCtlStore(sflCtrlFormatName);
-        if (!sflCtrlStore || ! sflCtrlStore.sflEdits) { return; }
+        if (!sflCtrlStore || !sflCtrlStore.sflEdits) { return; }
 
         let sflEl = DdsGrid.findRowSpanDiv(sflCtrlFormatName);
         if (!sflEl) { return; }
 
         const edits = sflCtrlStore.sflEdits;
-        for (let i = 0, l = edits.length; i < l; i++) {
-            for (let fieldName in edits[i].state) {
-                const input = Subfile.findFieldInDOM(sflEl, fieldName);
-                if (!input) {
-                    const newOffPageInput = Subfile.cloneDOM_Element(fieldName, edits[i].state[fieldName]);
-                    sflEl.appendChild(newOffPageInput);
-                    for (let hiddenFldName in edits[i].hiddenState) {
-                        const newOffPageHiddenInput = Subfile.cloneDOM_HiddenElement(hiddenFldName, edits[i].hiddenState[hiddenFldName]);
-                        sflEl.appendChild(newOffPageHiddenInput);
+        const hiddenFields = sflCtrlStore.sflHidden || new Map();
+        const injectedRRNs = new Set();
+
+        for (const [fieldName, inputState] of edits) {
+            const input = Subfile.findFieldInDOM(sflEl, fieldName);
+            if (!input) {
+                // Field is off-screen — clone it into the DOM for form submit
+                const newOffPageInput = Subfile.cloneDOM_Element(fieldName, inputState);
+                sflEl.appendChild(newOffPageInput);
+
+                // Also inject hidden fields for this row (once per RRN)
+                const rrn = SubfileState.extractRRN(fieldName);
+                if (rrn && !injectedRRNs.has(rrn)) {
+                    injectedRRNs.add(rrn);
+                    for (const [hiddenName, hiddenState] of hiddenFields) {
+                        if (SubfileState.extractRRN(hiddenName) === rrn) {
+                            if (!Subfile.findFieldInDOM(sflEl, hiddenName)) {
+                                const newHidden = Subfile.cloneDOM_HiddenElement(hiddenName, hiddenState);
+                                sflEl.appendChild(newHidden);
+                            }
+                        }
                     }
                 }
             }
