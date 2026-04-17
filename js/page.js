@@ -406,7 +406,7 @@ class Page {
         }
 
         if (typeof (MonarchSubfilePageChanging) === 'function') {   // Notify user-code
-            MonarchSubfilePageChanging(res.request.recordName, recordsContainer, res.request.from, res.request.request.to - 1, res.request.mode);
+            MonarchSubfilePageChanging(res.request.recordName, recordsContainer, res.request.from, res.request.to - 1, res.request.wantDropped);
         }
 
         const oldTopRrn = sflCtrlStore.current.topRrn;
@@ -548,7 +548,7 @@ class Page {
         FeedbackArea.updateSubfileCursorRrn(form, topRrn + (cursorPosRrnOffset >= 0?cursorPosRrnOffset:0));
 
         if (typeof (MonarchSubfilePageChanged) === 'function') {   // Notify user-code
-            MonarchSubfilePageChanged(res.request.recordName, recordsContainer, res.request.from, res.request.request.to - 1, res.request.mode);
+            MonarchSubfilePageChanged(res.request.recordName, recordsContainer, res.request.from, res.request.to - 1, res.request.wantDropped);
         }
     }
 
