@@ -73,7 +73,8 @@ class SubfileController {
                                     recordsContainer = tBody;
                                 }
 
-                                sflCtrlStore.initialPageState = SubfileState.rememberPageState(recordsContainer);
+                                sflCtrlStore.initialSnapshot = SubfileState.snapshotPage(recordsContainer); // Initial state of new page
+
                                 const withGridCol = SubfileController.selectAllWithGridColumns(recordsContainer);
                                 const sflColRange = SubfileController.calcSflMinMaxColRange(withGridCol);
 
