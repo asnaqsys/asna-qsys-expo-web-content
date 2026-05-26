@@ -216,6 +216,7 @@ class Labels {
     }
 
     loadLabels(localeCode) {
+        localeCode = localeCode || 'en-US';
         const defaultLabels = LOCALES[0].labels; // United States - English (en-US).
         let labels = null;
         for (let i = 0, l = LOCALES.length; i <l; i++) {
@@ -226,8 +227,9 @@ class Labels {
         }
 
         if (!labels) {
+            const langCode = localeCode.substring(0, 2); // e.g. 'en'
             for (let i = 0, l = LOCALES.length; i < l; i++) {
-                if (LOCALES[i].code.substring(0, 3) === localeCodecode.substring(0, 3)) { // i.e. partial match 'en-'
+                if (LOCALES[i].code.startsWith(langCode)) { // matches 'en-US', 'en-GB', etc.
                     labels = LOCALES[i].labels;
                     break;
                 }
@@ -279,6 +281,7 @@ class Labels {
         // support for other well known properties in browsers
         for (i = 0; i < browserLanguagePropertyKeys.length; i++) {
             language = nav[browserLanguagePropertyKeys[i]];
+            if (!language) { continue; }
             len = language.length;
             if (!shortLanguage && len) {
                 shortLanguage = language;
