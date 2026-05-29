@@ -488,70 +488,100 @@ class TerminalDOM {
         const gridColWidth = parseFloat(TerminalDOM.getGlobalVarValue('--term-col-width'));
         const t5250 = document.getElementById('AsnaTerm5250');
 
-        if (t5250 && !isNaN(gridColWidth) && gridColWidth > 0.0) {
-            const fontFamily = TerminalDOM.getGlobalVarValue('--term-font-family');
-            const cachedFontSize = theFontSizeCache.get(fontFamily, gridColWidth);
+        if (!t5250 || isNaN(gridColWidth) || gridColWidth <= 0.0) { return; }
 
-            if (cachedFontSize) {
-                TerminalDOM.setGlobalVar('--term-font-size', `${cachedFontSize}px`);
-            }
-            else {
-                t5250.style.cursor = 'wait';
+        const fontFamily = TerminalDOM.getGlobalVarValue('--term-font-family');
+        const cachedFontSize = theFontSizeCache.get(fontFamily, gridColWidth);
 
-                TerminalDOM.setGlobalVar('--term-row-vert-padding', '0px');
-
-                let fontSize = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
-
-                const a = document.createElement('pre');
-                a.className = 'bterm-render-section';
-                a.style.gridColumnStart = 79;
-                a.style.gridColumnEnd = 80;
-                a.textContent = 'M';
-                t5250.appendChild(a);
-
-                const leftPadM = ' '.repeat(78) + 'M';
-                let mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
-                let ra = TerminalDOM.getGridElementClientRight(a);
-
-                if (mb.h > fontSize) { // The CSS value is too small ...
-                    fontSize = mb.h;
-                    TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
-                    mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
-                    ra = TerminalDOM.getGridElementClientRight(a);
-                }
-
-                const t0 = performance.now();
-                let t1 = t0;
-                let iterations = 0;
-
-                while (mb.w > ra && fontSize > 5.0 && (t1 - t0) < (10 * 1000)) {
-                    fontSize -= FONT_SIZE_TRY_INCREMENT;
-                    TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
-                    ra = TerminalDOM.getGridElementClientRight(a);
-                    mb = TerminalDOM.measureHtmlPreSectionText(fontSize, leftPadM);
-                    t1 = performance.now();
-                    iterations++;
-                }
-
-                const rowH = parseFloat(TerminalDOM.getGlobalVarValue('--term-row-height'));
-                const hA = TerminalDOM.getGridElementClientHeight(a);
-
-                if (rowH > hA) {
-                    TerminalDOM.setGlobalVar('--term-row-vert-padding', `${(rowH-hA)/2}px`);
-                }
-
-                t5250.removeChild(a);
-                theFontSizeCache.save(fontFamily, gridColWidth, fontSize);
-                t5250.style.cursor = 'auto';
-
-                if (_debug2) { console.log(`iterations:${iterations}`); }
-            }
+        if (cachedFontSize) {
+            TerminalDOM.setGlobalVar('--term-font-size', `${cachedFontSize}px`);
+            // Still recompute vertical padding — row height may have changed on resize.
+            TerminalDOM._applyVertPadding(t5250);
+            return;
         }
+
+        t5250.style.cursor = 'wait';
+        TerminalDOM.setGlobalVar('--term-row-vert-padding', '0px');
+
+        // --- One persistent measure element for all binary-search iterations ---
+        const measureEl = document.createElement('pre');
+        measureEl.className = 'bterm-render-section';
+        measureEl.style.position = 'absolute';
+        measureEl.style.visibility = 'hidden';
+        measureEl.style.width = 'auto';
+        measureEl.style.height = 'auto';
+        measureEl.style.overflow = 'visible';
+        measureEl.style.border = '0';
+
+        // 'M' repeated for colCount chars — classic em-square monospace reference.
+        // colCount = cols - 1: using one fewer column gives a small safety margin
+        // to account for sub-pixel rounding differences across monospace fonts.
+        const colCount = 79;
+        measureEl.textContent = 'M'.repeat(colCount);
+        document.body.appendChild(measureEl);
+
+        // Target: colCount 'M' chars must fit within colCount grid columns.
+        // gridColWidth * colCount == rect.right of grid column 79 (grid starts at x=0).
+        const targetWidth = gridColWidth * colCount;
+
+        const measureWidth = (fs) => {
+            measureEl.style.fontSize = `${fs}px`;
+            return measureEl.clientWidth; // Single reflow per iteration
+        };
+
+        // --- Binary search ---
+        let lo = 4;
+        // Start hi from the current CSS value; if it already fits, grow until it doesn't.
+        let hi = parseFloat(TerminalDOM.getGlobalVarValue('--term-font-size'));
+        if (isNaN(hi) || hi <= lo) { hi = 200; }
+
+        // Guarantee hi is truly "too large" so the invariant holds.
+        while (hi < 400 && measureWidth(hi) <= targetWidth) { hi *= 1.5; }
+
+        let fontSize = lo;
+        let iterations = 0;
+        const PRECISION = 0.05; // px — more than enough for screen rendering
+        const MAX_ITER = 64;    // log2(400/0.05) ≈ 13 in practice; 64 is a safe ceiling
+
+        while ((hi - lo) > PRECISION && iterations < MAX_ITER) {
+            const mid = (lo + hi) / 2;
+            if (measureWidth(mid) <= targetWidth) {
+                fontSize = mid;  // mid fits — record it and try larger
+                lo = mid;
+            } else {
+                hi = mid;        // mid too large — try smaller
+            }
+            iterations++;
+        }
+
+        document.body.removeChild(measureEl);
+
+        TerminalDOM.setGlobalVar('--term-font-size', `${fontSize}px`);
+        TerminalDOM._applyVertPadding(t5250);
+
+        theFontSizeCache.save(fontFamily, gridColWidth, fontSize);
+        t5250.style.cursor = 'auto';
+
+        if (_debug2) { console.log(`setTerminalFont: fontSize=${fontSize.toFixed(3)}px, iterations=${iterations}`); }
     }
 
-    static getGridElementClientRight(gridEl) {
-        const rect = gridEl.getBoundingClientRect();
-        return rect.right;
+    // Extracted helper — also called from the cache-hit path on resize.
+    static _applyVertPadding(t5250) {
+        const a = document.createElement('pre');
+        a.className = 'bterm-render-section';
+        a.style.gridColumnStart = 79;
+        a.style.gridColumnEnd = 80;
+        a.textContent = 'M';
+        t5250.appendChild(a);
+
+        const rowH = parseFloat(TerminalDOM.getGlobalVarValue('--term-row-height'));
+        const hA = TerminalDOM.getGridElementClientHeight(a);
+        TerminalDOM.setGlobalVar(
+            '--term-row-vert-padding',
+            rowH > hA ? `${(rowH - hA) / 2}px` : '0px'
+        );
+
+        t5250.removeChild(a);
     }
     static getGridElementClientHeight(gridEl) {
         const rect = gridEl.getBoundingClientRect();
