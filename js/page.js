@@ -630,6 +630,12 @@ class Page {
         Signature.prepareForSubmit(form);
         DecDate.prepareForSubmit(form);
         SubfileController.saveLastSubfileClicked(window.location.pathname);
+        const lowerCaseNotAllowed = form.querySelectorAll('input[class*="dds-lowercase-not-allowed"]'); // For example: [Char(1, Upper=true)] (Note: 'Upper=true' is the default)
+        lowerCaseNotAllowed.forEach((el) => {
+            if (el.value && !el.disabled && el.name) { // Could also check for el.value != el.defaultValue if we wanted ONLY those changed by user, but this is probably good enough and more robust.
+                el.value = el.value.toUpperCase();
+            }
+        });
         if (!delaySubmit) {
             form.submit();  // Note: No need to set this.suspendAsyncPost = false (page will be de-allocated).
         }
