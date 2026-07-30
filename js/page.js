@@ -449,14 +449,17 @@ class Page {
             }
         }
 
-        // Snapshot tabIndex by DOM position before replacing innerHTML.
-        // Only named, non-hidden elements with tabIndex > 0 are considered.
-        const tabIndexByPosition = [];
-        recordsContainer.querySelectorAll('input, button, select, textarea').forEach(el => {
-            if (el.name && el.type !== 'hidden' && el.tabIndex > 0) {
-                tabIndexByPosition.push(el.tabIndex);
-            }
-        });
+        // Snapshot - only on first AJAX call when the initial full-page DOM is still present.
+        // Saved on sflCtrlStore so it persists across all page navigations for this subfile.
+        if (!sflCtrlStore.initialTabIndexByPosition) {
+            const tabIndexByPosition = [];
+            recordsContainer.querySelectorAll('input, button, select, textarea').forEach(el => {
+                if (el.name && el.type !== 'hidden' && el.tabIndex > 0) {
+                    tabIndexByPosition.push(el.tabIndex);
+                }
+            });
+            sflCtrlStore.initialTabIndexByPosition = tabIndexByPosition;
+        }
 
         recordsContainer.innerHTML = res.html;
 
@@ -486,17 +489,17 @@ class Page {
                     }
                     recordsContainer.appendChild(colWrapper);
                 }
-
             }
         }
 
         // Restore preserved tabIndex values by position after all DOM restructuring.
-        // The new page may have fewer records, so only restore as far as both arrays overlap.
-        if (tabIndexByPosition.length > 0) {
+        // Uses the initial full-page snapshot so PgUp from a partial last page works correctly.
+        const savedTabIndex = sflCtrlStore.initialTabIndexByPosition;
+        if (savedTabIndex && savedTabIndex.length > 0) {
             let posIdx = 0;
             recordsContainer.querySelectorAll('input, button, select, textarea').forEach(el => {
-                if (el.name && el.type !== 'hidden' && posIdx < tabIndexByPosition.length) {
-                    el.tabIndex = tabIndexByPosition[posIdx++];
+                if (el.name && el.type !== 'hidden' && posIdx < savedTabIndex.length) {
+                    el.tabIndex = savedTabIndex[posIdx++];
                 }
             });
         }
