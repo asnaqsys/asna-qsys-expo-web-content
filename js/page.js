@@ -449,6 +449,15 @@ class Page {
             }
         }
 
+        // Snapshot tabIndex by DOM position before replacing innerHTML.
+        // Only named, non-hidden elements with tabIndex > 0 are considered.
+        const tabIndexByPosition = [];
+        recordsContainer.querySelectorAll('input, button, select, textarea').forEach(el => {
+            if (el.name && el.type !== 'hidden' && el.tabIndex > 0) {
+                tabIndexByPosition.push(el.tabIndex);
+            }
+        });
+
         recordsContainer.innerHTML = res.html;
 
         if (sflCtrlStore.sflColumns && sflCtrlStore.sflColumns.columnCount > 1 && sflCtrlStore.sflColumns.maxRecordsPerColumn && sflCtrlStore.sflColumns.maxRecordsPerColumn > 0) {
@@ -478,15 +487,18 @@ class Page {
                     recordsContainer.appendChild(colWrapper);
                 }
 
-                // After restructuring the multi-column layout, we need to re-apply the tabIndex for input-capable elements to ensure proper keyboard navigation.
-                let tabIndex = 1;
-                const inputCapableElements = recordsContainer.querySelectorAll('input, button, select, textarea');
-                inputCapableElements.forEach(el => {
-                    if (el.type !== 'hidden') {
-                        el.tabIndex = tabIndex++;
-                    }
-                });
             }
+        }
+
+        // Restore preserved tabIndex values by position after all DOM restructuring.
+        // The new page may have fewer records, so only restore as far as both arrays overlap.
+        if (tabIndexByPosition.length > 0) {
+            let posIdx = 0;
+            recordsContainer.querySelectorAll('input, button, select, textarea').forEach(el => {
+                if (el.name && el.type !== 'hidden' && posIdx < tabIndexByPosition.length) {
+                    el.tabIndex = tabIndexByPosition[posIdx++];
+                }
+            });
         }
 
         // Re-apply style changes marked by 'data-asna-xxx' attributes
