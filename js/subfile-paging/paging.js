@@ -114,13 +114,22 @@ class SubfilePaging {
 
                 // Also inject hidden fields for this row (once per RRN)
                 const rrn = SubfileState.extractRRN(fieldName);
+                const subfileName = SubfileState.extractSubfileName(sflCtrlStore.name, fieldName);
+                const indexName = `${sflCtrlStore.name}.${subfileName}.Index`; 
+
                 if (rrn && !injectedRRNs.has(rrn)) {
                     injectedRRNs.add(rrn);
+                    let indexInjected = false;
                     for (const [hiddenName, hiddenState] of hiddenFields) {
                         if (SubfileState.extractRRN(hiddenName) === rrn) {
                             if (!Subfile.findFieldInDOM(sflEl, hiddenName)) {
                                 const newHidden = Subfile.cloneDOM_HiddenElement(hiddenName, hiddenState);
                                 sflEl.appendChild(newHidden);
+                                if (!indexInjected) {
+                                    const newIndexHidden = Subfile.cloneDOM_HiddenElement(indexName, { value: rrn });
+                                    sflEl.appendChild(newIndexHidden);
+                                    indexInjected = true;
+                                }
                             }
                         }
                     }
