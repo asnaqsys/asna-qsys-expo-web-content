@@ -143,6 +143,17 @@ class SubfileState {
         return match ? match[1] : null;
     }
 
+    // Extract the subfile-name from a field name like "SFLLC.SFLL[0].OPTION" given the subfile control name "SFLLC"
+    static extractSubfileName(sflCtrlName, fieldName) {
+        const prefix = `${sflCtrlName}.`;
+        if (fieldName.startsWith(prefix)) {
+            const remainder = fieldName.substring(prefix.length);
+            const match = remainder.match(/^([^\[\]]+)/);
+            return match ? match[1] : null;
+        }
+        return null;
+    }
+
     // Check if any edited field name contains the given RRN
     static hasEditForRRN(editedFieldNames, rrn) {
         for (const name of editedFieldNames) {

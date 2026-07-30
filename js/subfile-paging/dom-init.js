@@ -575,13 +575,13 @@ class Subfile {
             newInput.type = 'checkbox'; // Colud be 'radio' important think is that it can be 'ckecked'
             newInput.setAttribute("checked", true);
 
-            console.log(`Created ${fieldName} checked`);
+            // console.log(`Created ${fieldName} checked`);
         }
         else { // Note: we don't really care about specific type, the server will get value 
             newInput.type = 'text';
             newInput.setAttribute("value", inputState.value );
 
-            console.log(`Created ${fieldName} value:${newInput.value}`);
+            // console.log(`Created ${fieldName} value:${newInput.value}`);
         }
 
         newInput.style.display = 'none'; // avoid disrupting view
