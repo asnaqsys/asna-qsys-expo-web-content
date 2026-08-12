@@ -1,0 +1,76 @@
+name: Version for Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseType:
+        type: choice
+        description: Type of Release
+        options:
+          - build
+          - minor
+          - major
+
+jobs:
+  version:
+    name: Version for Release
+    runs-on: ubuntu-latest
+
+    env:
+      TARGET_REF: ${{ github.ref_name }}
+
+    steps:
+      - name: Print ref info
+        run: |
+          echo "TARGET_REF=${{ env.TARGET_REF }}"
+          echo "GITHUB_REF=${{ github.ref }}"
+          echo "GITHUB_REF_NAME=${{ github.ref_name }}"
+          echo "GITHUB_SHA=${{ github.sha }}"
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TARGET_REF }}
+          path: ${{ github.event.repository.name }}
+          # Commit-Changes pushes with the credentials persisted by this checkout.
+          token: ${{ secrets.RE_PAT }}
+
+      - name: Checkout DevOps repository
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ vars.DEVOPS_REPO }}
+          token: ${{ secrets.DEVOPS_PAT }}
+          path: devops
+          fetch-depth: 1
+
+      - name: Resolve the build version
+        # This repository has no projects, so the version lives under .github
+        # rather than beside code it does not have.
+        uses: ./devops/actions/resolve-build-version
+        id: build_version
+        with:
+          version-file: ./${{ github.event.repository.name }}/.github/Directory.Build.props
+          increment: ${{ github.event.inputs.releaseType }}
+
+      - name: Update version
+        uses: ./devops/actions/update-version
+        with:
+          version: ${{ steps.build_version.outputs.build-version }}
+
+      - name: Commit version changes
+        uses: ./devops/actions/commit-changes
+        with:
+          working-directory: ${{ github.event.repository.name }}
+          branch: ${{ env.TARGET_REF }}
+          user-name: ${{ vars.GH_USER }}
+          user-email: ${{ vars.GH_USEREMAIL }}
+          message: "Update version for build - ${{ steps.build_version.outputs.build-version }}"
+
+      - name: Trigger Create Beta Release Workflow
+        uses: ./devops/actions/trigger-workflow
+        with:
+          owner: ${{ github.repository_owner }}
+          repository: ${{ github.event.repository.name }}
+          workflow: create-beta-release.yml
+          ref: ${{ env.TARGET_REF }}
+          token: ${{ secrets.RE_PAT }}
