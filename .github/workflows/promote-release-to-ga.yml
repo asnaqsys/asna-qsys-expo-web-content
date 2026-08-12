@@ -1,0 +1,55 @@
+name: Promote Beta to GA
+
+on:
+  workflow_dispatch:
+    inputs:
+      betaTag:
+        type: string
+        description: Beta tag to promote. Leave empty for the most recent.
+        required: false
+
+jobs:
+  promote:
+    name: Promote Beta to GA
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout DevOps repository
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ vars.DEVOPS_REPO }}
+          token: ${{ secrets.DEVOPS_PAT }}
+          path: devops
+          fetch-depth: 1
+
+      - name: Resolve the release to create
+        # The GA release is cut from the commit the beta was tagged at, not
+        # from the current branch. On a CDN the tag is the path, so building
+        # from the branch could serve content that was never tested and
+        # nothing would report the difference.
+        uses: ./devops/actions/promote-release-tag
+        id: promote
+        with:
+          source-tag: ${{ github.event.inputs.betaTag }}
+          token: ${{ github.token }}
+
+      - name: Create the GA release
+        # A second tag rather than a promotion in place: consumers pinned to
+        # the beta URL must keep resolving after GA.
+        uses: ./devops/actions/publish-release
+        id: release
+        with:
+          tag: ${{ steps.promote.outputs.tag }}
+          target: ${{ steps.promote.outputs.commit }}
+          notes: ${{ steps.promote.outputs.notes }}
+          latest: "true"
+          token: ${{ github.token }}
+
+      - name: Purge the CDN
+        uses: ./devops/actions/purge-jsdelivr
+        with:
+          tag: ${{ steps.release.outputs.tag }}
+          token: ${{ github.token }}

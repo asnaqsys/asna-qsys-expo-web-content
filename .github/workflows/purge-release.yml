@@ -1,37 +1,34 @@
 name: Purge release
 
+# Dispatch only. The release workflows purge the tag they create, so a release
+# event here would purge everything a second time. This exists for the cases
+# they cannot cover: a purge that failed after its release was published and
+# cannot be re-run from that workflow, an older tag reported as stale, or a
+# partial purge against a rate limited service.
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
-      DEPLOY_VERSION:
-        description: 'Version to deploy'
+      tag:
+        type: string
+        description: Tag to purge
         required: true
 
 jobs:
-  release:
-    runs-on: windows-latest
+  purge:
+    name: Purge release
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Get purge tool
-        uses: actions/checkout@v3
+      - name: Checkout DevOps repository
+        uses: actions/checkout@v7
         with:
-          repository: asnarnd/PurgeExpoWebContentRelease
-          ref: master
-          path: PurgeExpoWebContentRelease
-          token: ${{ secrets.GH_APIKEY }}
+          repository: ${{ vars.DEVOPS_REPO }}
+          token: ${{ secrets.DEVOPS_PAT }}
+          path: devops
+          fetch-depth: 1
 
-      - name: Restore purge tool dependencies 
-        run: dotnet restore PurgeExpoWebContentRelease/PurgeExpoWebContentRelease.sln --locked-mode
-
-      - name: Build purge tool
-        run: dotnet build PurgeExpoWebContentRelease/PurgeExpoWebContentRelease.sln --no-restore --configuration release
-
-      - name: Run purge - New Release
-        run: PurgeExpoWebContentRelease/bin/Release/net8.0/PurgeExpoWebContentRelease.exe ${{ github.repository_owner }} ${{ github.event.repository.name }} ${{ github.event.release.tag_name }}
-        if: ${{ github.event_name == 'release' }}
-
-      - name: Run purge - Manual
-        run: PurgeExpoWebContentRelease/bin/Release/net8.0/PurgeExpoWebContentRelease.exe ${{ github.repository_owner }} ${{ github.event.repository.name }} ${{ github.event.inputs.DEPLOY_VERSION }}
-        if: ${{ github.event_name != 'release' }}
+      - name: Purge the CDN
+        uses: ./devops/actions/purge-jsdelivr
+        with:
+          tag: ${{ github.event.inputs.tag }}
+          token: ${{ github.token }}
