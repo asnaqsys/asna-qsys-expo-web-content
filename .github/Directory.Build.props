@@ -1,5 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup>
-    <Version>5.0.18</Version> <!-- Do not modify. -->
+    <Version>5.0.19</Version>
+    <!-- Do not modify. -->
   </PropertyGroup>
 </Project>
